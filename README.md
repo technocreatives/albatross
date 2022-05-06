@@ -2,6 +2,14 @@
 
 Tool to automate migrating a GitLab group to a GitLab instance
 
+## Description
+
+This is a Python script which does some stuff. It does the do on `gitlab.com`,
+enumerates all groups and subgroups and projects, then recreates them on the new
+instance.
+
+IDK, man. I'll figure it out as I go along.
+
 ## License
 
 This project is licensed under either
@@ -11,4 +19,4 @@ at your option.
 
 ## Is it any good?
 
-[yes](https://news.ycombinator.com/item?id=3067434)
+[yes](https://news.ycombinator.com/item?id=3067434).
