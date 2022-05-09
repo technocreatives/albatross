@@ -6,25 +6,50 @@ Albatross - A tool for migrating a GitLab.com group/project to a self-hosted ins
 Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
+from typing import Any, Callable
 import click
 import gitlab
 import logging
 import sys
-import typing
 
 
-def _prepare_logger(verbose: bool, debug: bool) -> None:
-    log_format = "%(asctime)s %(levelname)s   %(message)s"
-    date_format = "%Y-%m-%d %H:%M:%S"
-    if debug:
-        logging.basicConfig(level=logging.DEBUG, format=log_format, datefmt=date_format)
-    elif verbose:
-        logging.basicConfig(level=logging.INFO, format=log_format, datefmt=date_format)
-    else:
-        logging.basicConfig(
-            level=logging.WARNING, format=log_format, datefmt=date_format
+def _prepare_logger(func: Callable) -> Callable:
+    """Janky wrapper to prepare the logger before we start invoking it"""
+
+    def inner(*args: tuple, **kwargs: dict) -> Any:
+        log_format = "%(asctime)s %(levelname)s   %(message)s"
+        date_format = "%Y-%m-%d %H:%M:%S"
+        if kwargs["debug"]:
+            logging.basicConfig(
+                level=logging.DEBUG, format=log_format, datefmt=date_format
+            )
+        elif kwargs["verbose"]:
+            logging.basicConfig(
+                level=logging.INFO, format=log_format, datefmt=date_format
+            )
+        else:
+            logging.basicConfig(
+                level=logging.WARNING, format=log_format, datefmt=date_format
+            )
+        logging.debug("Logging started")
+
+        return func(*args, **kwargs)
+
+    return inner
+
+
+def _call_logger(func: Callable) -> Callable:
+    """Janky wrapping call logger, for debugging reasons"""
+
+    def inner(*args: tuple, **kwargs: dict) -> Any:
+        logging.debug(
+            "Call to {} with args {} and kwargs {}".format(func.__name__, args, kwargs)
         )
-    logging.debug("Logging started")
+        return_val = func(*args, **kwargs)
+        logging.debug("{} returned with {}".format(func.__name__, return_val))
+        return return_val
+
+    return inner
 
 
 @click.command(
@@ -50,10 +75,9 @@ Any commandline option can also be given via environment variables. i.e. the
 @click.option(
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
 )
+@_prepare_logger
+@_call_logger
 def main(source_url, source_username, source_pat, source_token, verbose, debug) -> None:
-    # Capture arguments
-    args = locals()
-
     # Early exit - handcrafted mutual exclusion
     if source_username is None and source_pat is None and source_token is None:
         print(
@@ -61,9 +85,6 @@ def main(source_url, source_username, source_pat, source_token, verbose, debug) 
         )
         sys.exit(1)
 
-    # Create the logger
-    _prepare_logger(verbose, debug)
-    logging.debug("main called with {}".format(args))
 
 
 # For invocation from the commandline
