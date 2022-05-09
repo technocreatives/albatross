@@ -61,7 +61,9 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
         else "https://" + url
     )
     logging.debug("URL: {}".format(url))
-    return gitlab.Gitlab(url=url, private_token=token)
+    gl = gitlab.Gitlab(url=url, private_token=token)
+    gl.auth()
+    return gl
 
 
 @click.command(
