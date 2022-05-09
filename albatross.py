@@ -54,29 +54,18 @@ def _call_logger(func: Callable) -> Callable:
 
 
 @_call_logger
-def open_gitlab_connection(
-    url: str, username: Optional[str], pat: Optional[str], token: Optional[str]
-) -> gitlab.client.Gitlab:
+def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitlab:
     url = (
         url
         if url.startswith("http://") or url.startswith("https://")
         else "https://" + url
     )
     logging.debug("URL: {}".format(url))
-    token = (
-        token
-        if token is not None
-        else base64.b64encode((username + ":" + pat).encode("utf-8")).decode("utf-8")
-    )
-    logging.debug("Auth token: {}".format(token))
     return gitlab.Gitlab(url=url, private_token=token)
 
 
 @click.command(
     help="""Migration tool for GitLab instances
-
-For both the source and target instances a username and PAT OR an (RFC 7235) auth token
-must be defined. If both are defined, then the token takes precedence.
 
 Any commandline option can also be given via environment variables. i.e. the
 "source-url" value can be given via the variable "ALBATROSS_SOURCE_URL".
@@ -88,27 +77,17 @@ Any commandline option can also be given via environment variables. i.e. the
     help="Instance to read from",
     show_default=True,
 )
-@click.option("--source-username", help="Username on the source side")
-@click.option("--source-pat", help="Personal Access Token on the source side")
-@click.option("--source-token", help="HTTP Auth token for the source side")
+@click.option("--source-token", help="Personal Access Token for the source side")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output")
 @click.option(
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
 )
 @_prepare_logger
 @_call_logger
-def main(source_url, source_username, source_pat, source_token, verbose, debug) -> None:
-    # Early exit - handcrafted mutual exclusion
-    if source_username is None and source_pat is None and source_token is None:
-        print(
-            "One of username/pat or token must be specified for source", file=sys.stderr
-        )
-        sys.exit(1)
+def main(source_url, source_token, verbose, debug) -> None:
 
     logging.info("Opening connection to source")
-    source = open_gitlab_connection(
-        source_url, source_username, source_pat, source_token
-    )
+    source = open_gitlab_connection(url=source_url, token=source_token)
 
 
 # For invocation from the commandline
