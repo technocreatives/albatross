@@ -6,7 +6,8 @@ Albatross - A tool for migrating a GitLab.com group/project to a self-hosted ins
 Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
-from typing import Any, Callable
+from typing import Any, Callable, Optional
+import base64
 import click
 import gitlab
 import logging
@@ -52,6 +53,25 @@ def _call_logger(func: Callable) -> Callable:
     return inner
 
 
+@_call_logger
+def open_gitlab_connection(
+    url: str, username: Optional[str], pat: Optional[str], token: Optional[str]
+) -> gitlab.client.Gitlab:
+    url = (
+        url
+        if url.startswith("http://") or url.startswith("https://")
+        else "https://" + url
+    )
+    logging.debug("URL: {}".format(url))
+    token = (
+        token
+        if token is not None
+        else base64.b64encode((username + ":" + pat).encode("utf-8")).decode("utf-8")
+    )
+    logging.debug("Auth token: {}".format(token))
+    return gitlab.Gitlab(url=url, private_token=token)
+
+
 @click.command(
     help="""Migration tool for GitLab instances
 
@@ -85,6 +105,10 @@ def main(source_url, source_username, source_pat, source_token, verbose, debug) 
         )
         sys.exit(1)
 
+    logging.info("Opening connection to source")
+    source = open_gitlab_connection(
+        source_url, source_username, source_pat, source_token
+    )
 
 
 # For invocation from the commandline
