@@ -80,7 +80,16 @@ Any commandline option can also be given via environment variables. i.e. the
     show_default=True,
 )
 @click.option(
-    "--source-token", required=True, help="Personal Access Token for the source side"
+    "-t", "--source-token",
+    required=True,
+    help="Personal Access Token for the source side",
+)
+@click.option(
+    "-g",
+    "--source-group",
+    required=True,
+    type=int,
+    help="Group ID on the source side to migrate from",
 )
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output")
 @click.option(
@@ -88,7 +97,7 @@ Any commandline option can also be given via environment variables. i.e. the
 )
 @_prepare_logger
 @_call_logger
-def main(source_url, source_token, verbose, debug) -> None:
+def main(source_url, source_token, source_group, verbose, debug) -> None:
 
     logging.info("Opening connection to source")
     source = open_gitlab_connection(url=source_url, token=source_token)
