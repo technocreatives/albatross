@@ -77,7 +77,9 @@ Any commandline option can also be given via environment variables. i.e. the
     help="Instance to read from",
     show_default=True,
 )
-@click.option("--source-token", help="Personal Access Token for the source side")
+@click.option(
+    "--source-token", required=True, help="Personal Access Token for the source side"
+)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output")
 @click.option(
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
