@@ -51,6 +51,9 @@ Any commandline option can also be given via environment variables. i.e. the
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
 )
 def main(source_url, source_username, source_pat, source_token, verbose, debug) -> None:
+    # Capture arguments
+    args = locals()
+
     # Early exit - handcrafted mutual exclusion
     if source_username is None and source_pat is None and source_token is None:
         print(
@@ -60,6 +63,7 @@ def main(source_url, source_username, source_pat, source_token, verbose, debug) 
 
     # Create the logger
     _prepare_logger(verbose, debug)
+    logging.debug("main called with {}".format(args))
 
 
 # For invocation from the commandline
