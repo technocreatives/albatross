@@ -7,11 +7,10 @@ Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
 from typing import Any, Callable, Optional
-import base64
 import click
 import gitlab
 import logging
-import sys
+import pprint
 
 
 def _prepare_logger(func: Callable) -> Callable:
@@ -101,6 +100,8 @@ def main(source_url, source_token, source_group, verbose, debug) -> None:
 
     logging.info("Opening connection to source")
     source = open_gitlab_connection(url=source_url, token=source_token)
+
+    pprint.pprint(source.groups.get(source_group).__dict__)
 
 
 # For invocation from the commandline
