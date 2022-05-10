@@ -66,10 +66,10 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 
 
 @_call_logger
-def migrate_project(project: Any, dest_group: Any, dry_run: bool) -> None:
+def migrate_project(project: Any, dest: Any, dest_gid: int, dry_run: bool) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
-    d_ns = dest_group.full_path
+    d_ns = dest.groups.get(dest_gid).full_path
     logging.info(
         "Migrating project {} from source namespace {} to destination namespace {}".format(
             name, s_ns, d_ns
@@ -88,11 +88,13 @@ def migrate_project(project: Any, dest_group: Any, dry_run: bool) -> None:
 @_call_logger
 def migrate_projects(
     project_list: list[Any],
-    dest_group: Any,
+    dest: Any,
+    dest_gid: int,
     dry_run: bool,
 ) -> None:
     for project in project_list:
-        migrate_project(project=project, dest_group=dest_group, dry_run=dry_run)
+        migrate_project(project=project, dest=dest, dest_gid=dest_gid, dry_run=dry_run)
+        break
 
 
 @_call_logger
@@ -115,7 +117,8 @@ def migrate(
         logging.info("Migrating {} orphans...".format(len(orphans)))
         migrate_projects(
             project_list=orphans,
-            dest_group=dest.groups.get(orphan_gid),
+            dest=dest,
+            dest_gid=orphan_gid,
             dry_run=dry_run,
         )
 
