@@ -139,7 +139,8 @@ subgroups on the source side, they can either be recreated as subgroups on the
 destination side (given an actual GID) or recreated as groups at the instance root
 (given the special GID 0). Projects that live in the group root on the source side -
 called "orphan projects" - can't be created at the instance root, so will require an
-actual GID on the destination side.
+actual GID on the destination side. Groups which contain no subgroups or projects will
+not be migrated.
 
 This tool uses the local system as a staging environment when pulling data from the
 source and pushing to the target. Make sure you have enough disk space available to
