@@ -148,7 +148,8 @@ def main(
     logging.info("Opening connection to source")
     source = open_gitlab_connection(url=source_url, token=source_token)
 
-    pprint.pprint(source.groups.get(source_group).__dict__)
+    logging.info("Opening connection to destination")
+    dest = open_gitlab_connection(url=dest_url, token=dest_token)
 
 
 # For invocation from the commandline
