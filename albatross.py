@@ -43,10 +43,10 @@ def _call_logger(func: Callable) -> Callable:
 
     def inner(*args: tuple, **kwargs: dict) -> Any:
         logging.debug(
-            "Call to {} with args {} and kwargs {}".format(func.__name__, args, kwargs)
+            "CALL to {} with args {} and kwargs {}".format(func.__name__, args, kwargs)
         )
         return_val = func(*args, **kwargs)
-        logging.debug("{} returned with {}".format(func.__name__, return_val))
+        logging.debug("RETURN from {} with {}".format(func.__name__, return_val))
         return return_val
 
     return inner
