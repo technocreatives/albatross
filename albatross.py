@@ -137,6 +137,19 @@ def migrate(
 @click.command(
     help="""Migration tool for GitLab instances
 
+This tool migrates:\n
+    - Group/subgroup structure\n
+    - Projects (including avatar and description)\n
+    - Repositories\n
+    - Issues\n
+    - Merge requests\n
+    - CI variables
+
+This tool does NOT migrate:\n
+    - Users and special user permissions\n
+    - Containers, packages, or infrastructure\n
+    - Any CI history
+
 The tool requires one group ID on the source side and two on the destination side. For
 subgroups on the source side, they can either be recreated as subgroups on the
 destination side (given an actual GID) or recreated as groups at the instance root
