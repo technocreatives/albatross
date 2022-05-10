@@ -115,6 +115,10 @@ destination side (given an actual GID) or recreated as groups at the instance ro
 called "orphan projects" - can't be created at the instance root, so will require an
 actual GID on the destination side.
 
+This tool uses the local system as a staging environment when pulling data from the
+source and pushing to the target. Make sure you have enough disk space available to
+accomodate that.
+
 Any commandline option can also be given via environment variables. i.e. the
 "source-url" value can be given via the variable "ALBATROSS_SOURCE_URL".
 """
