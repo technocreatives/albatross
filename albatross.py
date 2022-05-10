@@ -119,6 +119,13 @@ Any commandline option can also be given via environment variables. i.e. the
     type=int,
     help="Group ID on the destination side to migrate orphaned projects to. Cannot be 0.",
 )
+@click.option(
+    "-n",
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Prevents any write-action on the destination.",
+)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output")
 @click.option(
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
@@ -133,6 +140,7 @@ def main(
     dest_token,
     dest_group,
     dest_orphan_group,
+    dry_run,
     verbose,
     debug,
 ) -> None:
