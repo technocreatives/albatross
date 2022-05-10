@@ -66,6 +66,15 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 
 
 @_call_logger
+def migrate_projects(
+    project_list: list[Any],
+    dest_group: Any,
+    dry_run: bool,
+) -> None:
+    pass
+
+
+@_call_logger
 def migrate(
     source: gitlab.client.Gitlab,
     dest: gitlab.client.Gitlab,
@@ -78,10 +87,16 @@ def migrate(
     sg = source.groups.get(source_gid)
 
     logging.debug("Enumerating orphans")
-    if len(sg.projects.list(all=True)) == 0:
+    orphans = sg.projects.list(all=True)
+    if len(orphans) == 0:
         logging.info("No orphans to migrate")
     else:
-        raise NotImplementedError("No orphan handling just yet")
+        logging.info("Migrating {} orphans...".format(len(orphans)))
+        migrate_projects(
+            project_list=orphans,
+            dest_group=dest.groups.get(orphan_gid),
+            dry_run=dry_run,
+        )
 
     logging.debug("Enumerating subgroups")
     if len(sg.subgroups.list(all=True)) == 0:
