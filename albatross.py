@@ -80,8 +80,11 @@ def migrate_project(project: Any, dest: Any, dest_gid: int, dry_run: bool) -> No
         logging.warning(
             "DRY RUN: project {} will not be created in namespace {}".format(name, d_ns)
         )
-    else:
-        pass
+        return
+
+    logging.debug("Creating project {} in namespace ID {}".format(name, dest_gid))
+    d_project = dest.projects.create({'name': name, 'namespace_id': dest_gid})
+    d_project.description = project.description
 
 
 
