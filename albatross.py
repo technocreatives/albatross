@@ -68,6 +68,13 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 @click.command(
     help="""Migration tool for GitLab instances
 
+The tool requires one group ID on the source side and two on the destination side. For
+subgroups on the source side, they can either be recreated as subgroups on the
+destination side (given an actual GID) or recreated as groups at the instance root
+(given the special GID 0). Projects that live in the group root on the source side -
+called "orphan projects" - can't be created at the instance root, so will require an
+actual GID on the destination side.
+
 Any commandline option can also be given via environment variables. i.e. the
 "source-url" value can be given via the variable "ALBATROSS_SOURCE_URL".
 """
@@ -79,7 +86,8 @@ Any commandline option can also be given via environment variables. i.e. the
     show_default=True,
 )
 @click.option(
-    "-t", "--source-token",
+    "-t",
+    "--source-token",
     required=True,
     help="Personal Access Token for the source side",
 )
@@ -90,13 +98,44 @@ Any commandline option can also be given via environment variables. i.e. the
     type=int,
     help="Group ID on the source side to migrate from",
 )
+@click.option("-U", "--dest-url", required=True, help="Instance to write to")
+@click.option(
+    "-T",
+    "--dest-token",
+    required=True,
+    help="Personal Access Token for the destination side",
+)
+@click.option(
+    "-G",
+    "--dest-group",
+    required=True,
+    type=int,
+    help="Group ID on the destination side to migrate subgroups to. 0 means instance root.",
+)
+@click.option(
+    "-O",
+    "--dest-orphan-group",
+    required=True,
+    type=int,
+    help="Group ID on the destination side to migrate orphaned projects to. Cannot be 0.",
+)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output")
 @click.option(
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
 )
 @_prepare_logger
 @_call_logger
-def main(source_url, source_token, source_group, verbose, debug) -> None:
+def main(
+    source_url,
+    source_token,
+    source_group,
+    dest_url,
+    dest_token,
+    dest_group,
+    dest_orphan_group,
+    verbose,
+    debug,
+) -> None:
 
     logging.info("Opening connection to source")
     source = open_gitlab_connection(url=source_url, token=source_token)
