@@ -74,7 +74,20 @@ def migrate(
     orphan_gid: int,
     dry_run: bool,
 ) -> None:
-    pass
+    logging.debug("Retrieving source group")
+    sg = source.groups.get(source_gid)
+
+    logging.debug("Enumerating orphans")
+    if len(sg.projects.list(all=True)) == 0:
+        logging.info("No orphans to migrate")
+    else:
+        raise NotImplementedError("No orphan handling just yet")
+
+    logging.debug("Enumerating subgroups")
+    if len(sg.subgroups.list(all=True)) == 0:
+        logging.info("No subgroups to migrate")
+    else:
+        raise NotImplementedError("No subgroup handling just yet")
 
 
 @click.command(
