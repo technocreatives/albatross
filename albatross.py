@@ -99,9 +99,11 @@ def migrate(
         )
 
     logging.debug("Enumerating subgroups")
-    if len(sg.subgroups.list(all=True)) == 0:
+    subgroups = sg.subgroups.list(all=True)
+    if len(subgroups) == 0:
         logging.info("No subgroups to migrate")
     else:
+        logging.info("Migrating {} subgroups...".format(len(subgroups)))
         raise NotImplementedError("No subgroup handling just yet")
 
 
