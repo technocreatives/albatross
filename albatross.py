@@ -66,12 +66,33 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 
 
 @_call_logger
+def migrate_project(project: Any, dest_group: Any, dry_run: bool) -> None:
+    name = project.name
+    s_ns = project.namespace.get("full_path")
+    d_ns = dest_group.full_path
+    logging.info(
+        "Migrating project {} from source namespace {} to destination namespace {}".format(
+            name, s_ns, d_ns
+        )
+    )
+
+    if dry_run:
+        logging.warning(
+            "DRY RUN: project {} will not be created in namespace {}".format(name, d_ns)
+        )
+    else:
+        pass
+
+
+
+@_call_logger
 def migrate_projects(
     project_list: list[Any],
     dest_group: Any,
     dry_run: bool,
 ) -> None:
-    pass
+    for project in project_list:
+        migrate_project(project=project, dest_group=dest_group, dry_run=dry_run)
 
 
 @_call_logger
