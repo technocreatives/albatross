@@ -65,6 +65,18 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
     return gl
 
 
+@_call_logger
+def migrate(
+    source: gitlab.client.Gitlab,
+    dest: gitlab.client.Gitlab,
+    source_gid: int,
+    dest_gid: int,
+    orphan_gid: int,
+    dry_run: bool,
+) -> None:
+    pass
+
+
 @click.command(
     help="""Migration tool for GitLab instances
 
@@ -150,6 +162,18 @@ def main(
 
     logging.info("Opening connection to destination")
     dest = open_gitlab_connection(url=dest_url, token=dest_token)
+
+    logging.info("Starting migration...")
+    migrate(
+        source=source,
+        dest=dest,
+        source_gid=source_group,
+        dest_gid=dest_group,
+        orphan_gid=dest_orphan_group,
+        dry_run=dry_run,
+    )
+
+    logging.info("Migration complete")
 
 
 # For invocation from the commandline
