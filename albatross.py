@@ -66,7 +66,9 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 
 
 @_call_logger
-def migrate_project(project: Any, dest: Any, dest_gid: int, dry_run: bool) -> None:
+def migrate_project(
+    project: Any, session_cookie: Optional[str], dest: Any, dest_gid: int, dry_run: bool
+) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
     d_ns = dest.groups.get(dest_gid).full_path
@@ -90,6 +92,7 @@ def migrate_project(project: Any, dest: Any, dest_gid: int, dry_run: bool) -> No
 @_call_logger
 def migrate_projects(
     project_list: list[Any],
+    session_cookie: Optional[str],
     dest: Any,
     dest_gid: int,
     dry_run: bool,
@@ -103,7 +106,7 @@ def migrate(
     source: gitlab.client.Gitlab,
     dest: gitlab.client.Gitlab,
     source_gid: int,
-    session_cookie: str,
+    session_cookie: Optional[str],
     dest_gid: int,
     orphan_gid: int,
     dry_run: bool,
@@ -119,6 +122,7 @@ def migrate(
         logging.info("Migrating {} orphans...".format(len(orphans)))
         migrate_projects(
             project_list=orphans,
+            session_cookie=session_cookie,
             dest=dest,
             dest_gid=orphan_gid,
             dry_run=dry_run,
