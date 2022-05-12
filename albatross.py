@@ -11,6 +11,7 @@ import click
 import gitlab
 import logging
 import pprint
+import requests
 
 
 def _prepare_logger(func: Callable) -> Callable:
@@ -66,6 +67,14 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 
 
 @_call_logger
+def migrate_project_avatar(url: str, dest: Any, cookie: str) -> None:
+    avatar_req = requests.get(url, cookies={"_gitlab_session": cookie})
+    if avatar_req.status_code != 200:
+        logging.warning("Failed to retrieve avatar from {}".format(url))
+    dest.avatar = avatar_req.content
+
+
+@_call_logger
 def migrate_project(
     project: Any, session_cookie: Optional[str], dest: Any, dest_gid: int, dry_run: bool
 ) -> None:
@@ -87,6 +96,20 @@ def migrate_project(
     logging.debug("Creating project {} in namespace ID {}".format(name, dest_gid))
     d_project = dest.projects.create({"name": name, "namespace_id": dest_gid})
     d_project.description = project.description
+
+    if project.avatar_url is not None:
+        if session_cookie is not None:
+            migrate_project_avatar(
+                url=project.avatar_url, dest=d_project, cookie=session_cookie
+            )
+        else:
+            logging.warning(
+                "Avatar of project {} in namespace {} will not be migrated due to missing session cookie".format(
+                    name, s_ns
+                )
+            )
+
+    d_project.save()
 
 
 @_call_logger
