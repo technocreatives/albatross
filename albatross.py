@@ -67,7 +67,7 @@ def open_gitlab_connection(url: str, token: Optional[str]) -> gitlab.client.Gitl
 
 
 @_call_logger
-def migrate_project_avatar(url: str, dest: Any, cookie: str) -> None:
+def migrate_avatar(url: str, dest: Any, cookie: str) -> None:
     avatar_req = requests.get(url, cookies={"_gitlab_session": cookie})
     if avatar_req.status_code != 200:
         logging.warning("Failed to retrieve avatar from {}".format(url))
@@ -89,7 +89,9 @@ def migrate_project(
 
     if dry_run:
         logging.warning(
-            "DRY RUN: project {} from namespace {} will not be migrated".format(name, s_ns)
+            "DRY RUN: project {} from namespace {} will not be migrated".format(
+                name, s_ns
+            )
         )
         return
 
@@ -99,7 +101,7 @@ def migrate_project(
 
     if project.avatar_url is not None:
         if session_cookie is not None:
-            migrate_project_avatar(
+            migrate_avatar(
                 url=project.avatar_url, dest=d_project, cookie=session_cookie
             )
         else:
