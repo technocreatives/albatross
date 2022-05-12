@@ -89,7 +89,7 @@ def migrate_project(
 
     if dry_run:
         logging.warning(
-            "DRY RUN: project {} will not be created in namespace {}".format(name, d_ns)
+            "DRY RUN: project {} from namespace {} will not be migrated".format(name, s_ns)
         )
         return
 
