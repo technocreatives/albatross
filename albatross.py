@@ -163,9 +163,9 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     d_project.description = project.description
 
     if project.avatar_url is not None:
-        if data.session_cookie is not None:
+        if data.cookie is not None:
             migrate_avatar(
-                url=project.avatar_url, dest=d_project, cookie=data.session_cookie
+                url=project.avatar_url, dest=d_project, cookie=data.cookie
             )
         else:
             logging.warning(
