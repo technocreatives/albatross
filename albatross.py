@@ -98,7 +98,13 @@ def migrate_projects(
     dry_run: bool,
 ) -> None:
     for project in project_list:
-        migrate_project(project=project, dest=dest, dest_gid=dest_gid, dry_run=dry_run)
+        migrate_project(
+            project=project,
+            session_cookie=session_cookie,
+            dest=dest,
+            dest_gid=dest_gid,
+            dry_run=dry_run,
+        )
 
 
 @_call_logger
