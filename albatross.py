@@ -160,9 +160,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
 
     if project.avatar_url is not None:
         if data.cookie is not None:
-            migrate_avatar(
-                url=project.avatar_url, dest=d_project, cookie=data.cookie
-            )
+            migrate_avatar(url=project.avatar_url, dest=d_project, cookie=data.cookie)
         else:
             logging.warning(
                 "Avatar of project {} in namespace {} will not be migrated due to missing session cookie".format(
