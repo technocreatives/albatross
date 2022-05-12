@@ -168,6 +168,7 @@ def migrate(data: AlbatrossData) -> None:
     else:
         logging.info("Migrating {} orphans...".format(len(orphans)))
         migrate_projects(project_list=orphans, dest_gid=data.orphan_gid, data=data)
+    logging.info("Finished migrating orphans")
 
     logging.debug("Enumerating subgroups")
     subgroups = sg.subgroups.list(all=True)
@@ -176,6 +177,7 @@ def migrate(data: AlbatrossData) -> None:
     else:
         logging.info("Migrating {} subgroups...".format(len(subgroups)))
         raise NotImplementedError("No subgroup handling just yet")
+    logging.info("Finished migrating subgroups")
 
 
 @click.command(
