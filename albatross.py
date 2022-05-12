@@ -75,6 +75,26 @@ def migrate_avatar(url: str, dest: Any, cookie: str) -> None:
 
 
 @_call_logger
+def migrate_variables(source: Any, dest: Any) -> int:
+    counter = 0
+    for var in source.variables.list():
+        logging.debug("Migrating variable {}".format(var.key))
+        dest.variables.create(
+            {
+                "key": var.key,
+                "value": var.value,
+                "environment_scope": var.environment_scope,
+                "masked": var.masked,
+                "protected": var.protected,
+                "variable_type": var.variable_type,
+            }
+        )
+        counter += 1
+
+    return counter
+
+
+@_call_logger
 def migrate_project(
     project: Any, session_cookie: Optional[str], dest: Any, dest_gid: int, dry_run: bool
 ) -> None:
@@ -112,6 +132,10 @@ def migrate_project(
             )
 
     d_project.save()
+
+    num_vars = migrate_variables(source=project, dest=d_project)
+    if num_vars > 0:
+        logging.info("Migrated {} variables in project {}".format(num_vars, name))
 
 
 @_call_logger
