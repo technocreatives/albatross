@@ -83,9 +83,8 @@ def migrate_project(project: Any, dest: Any, dest_gid: int, dry_run: bool) -> No
         return
 
     logging.debug("Creating project {} in namespace ID {}".format(name, dest_gid))
-    d_project = dest.projects.create({'name': name, 'namespace_id': dest_gid})
+    d_project = dest.projects.create({"name": name, "namespace_id": dest_gid})
     d_project.description = project.description
-
 
 
 @_call_logger
@@ -97,7 +96,6 @@ def migrate_projects(
 ) -> None:
     for project in project_list:
         migrate_project(project=project, dest=dest, dest_gid=dest_gid, dry_run=dry_run)
-        break
 
 
 @_call_logger
