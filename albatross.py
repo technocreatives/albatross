@@ -6,12 +6,24 @@ Albatross - A tool for migrating a GitLab.com group/project to a self-hosted ins
 Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
+from dataclasses import dataclass
 from pprint import pprint as pp
 from typing import Any, Callable, Optional
 import click
 import gitlab
 import logging
 import requests
+
+
+@dataclass
+class AlbatrossData:
+    source: gitlab.client.Gitlab
+    dest: gitlab.client.Gitlab
+    source_gid: int
+    main_gid: int
+    orphan_gid: int
+    cookie: str
+    dry_run: bool
 
 
 def _prepare_logger(func: Callable) -> Callable:
@@ -95,19 +107,17 @@ def migrate_variables(source: Any, dest: Any) -> int:
 
 
 @_call_logger
-def migrate_project(
-    project: Any, session_cookie: Optional[str], dest: Any, dest_gid: int, dry_run: bool
-) -> None:
+def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
-    d_ns = dest.groups.get(dest_gid).full_path
+    d_ns = data.dest.groups.get(dest_gid).full_path
     logging.info(
         "Migrating project {} from source namespace {} to destination namespace {}".format(
             name, s_ns, d_ns
         )
     )
 
-    if dry_run:
+    if data.dry_run:
         logging.warning(
             "DRY RUN: project {} from namespace {} will not be migrated".format(
                 name, s_ns
@@ -116,13 +126,13 @@ def migrate_project(
         return
 
     logging.debug("Creating project {} in namespace ID {}".format(name, dest_gid))
-    d_project = dest.projects.create({"name": name, "namespace_id": dest_gid})
+    d_project = data.dest.projects.create({"name": name, "namespace_id": dest_gid})
     d_project.description = project.description
 
     if project.avatar_url is not None:
-        if session_cookie is not None:
+        if data.session_cookie is not None:
             migrate_avatar(
-                url=project.avatar_url, dest=d_project, cookie=session_cookie
+                url=project.avatar_url, dest=d_project, cookie=data.session_cookie
             )
         else:
             logging.warning(
@@ -140,34 +150,16 @@ def migrate_project(
 
 @_call_logger
 def migrate_projects(
-    project_list: list[Any],
-    session_cookie: Optional[str],
-    dest: Any,
-    dest_gid: int,
-    dry_run: bool,
+    project_list: list[Any], dest_gid: int, data: AlbatrossData
 ) -> None:
     for project in project_list:
-        migrate_project(
-            project=project,
-            session_cookie=session_cookie,
-            dest=dest,
-            dest_gid=dest_gid,
-            dry_run=dry_run,
-        )
+        migrate_project(project=project, dest_gid=dest_gid, data=data)
 
 
 @_call_logger
-def migrate(
-    source: gitlab.client.Gitlab,
-    dest: gitlab.client.Gitlab,
-    source_gid: int,
-    session_cookie: Optional[str],
-    dest_gid: int,
-    orphan_gid: int,
-    dry_run: bool,
-) -> None:
+def migrate(data: AlbatrossData) -> None:
     logging.debug("Retrieving source group")
-    sg = source.groups.get(source_gid)
+    sg = data.source.groups.get(data.source_gid)
 
     logging.debug("Enumerating orphans")
     orphans = sg.projects.list(all=True)
@@ -175,13 +167,7 @@ def migrate(
         logging.info("No orphans to migrate")
     else:
         logging.info("Migrating {} orphans...".format(len(orphans)))
-        migrate_projects(
-            project_list=orphans,
-            session_cookie=session_cookie,
-            dest=dest,
-            dest_gid=orphan_gid,
-            dry_run=dry_run,
-        )
+        migrate_projects(project_list=orphans, dest_gid=data.orphan_gid, data=data)
 
     logging.debug("Enumerating subgroups")
     subgroups = sg.subgroups.list(all=True)
@@ -305,16 +291,18 @@ def main(
     logging.info("Opening connection to destination")
     dest = open_gitlab_connection(url=dest_url, token=dest_token)
 
-    logging.info("Starting migration...")
-    migrate(
+    data = AlbatrossData(
         source=source,
         dest=dest,
         source_gid=source_group,
-        session_cookie=session_cookie,
-        dest_gid=dest_group,
+        main_gid=dest_group,
         orphan_gid=dest_orphan_group,
+        cookie=session_cookie,
         dry_run=dry_run,
     )
+
+    logging.info("Starting migration...")
+    migrate(data)
 
     logging.info("Migration complete")
 
