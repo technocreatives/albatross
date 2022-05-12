@@ -6,6 +6,8 @@ Albatross - A tool for migrating a GitLab.com group/project to a self-hosted ins
 Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
+from base64 import b64encode
+from git import Repo
 from dataclasses import dataclass
 from pprint import pprint as pp
 from typing import Any, Callable, Optional
@@ -13,6 +15,7 @@ import click
 import gitlab
 import logging
 import requests
+import tempfile
 
 
 @dataclass
@@ -108,8 +111,32 @@ def migrate_variables(source: Any, dest: Any) -> int:
 
 @_call_logger
 def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
+    source_auth = b64encode(
+        (data.source.user.username + ":" + data.source.private_token).encode("utf-8")
+    ).decode("utf-8")
+    logging.debug("Derived source auth {}".format(source_auth))
+    dest_auth = b64encode(
+        (data.dest.user.username + ":" + data.dest.private_token).encode("utf-8")
+    ).decode("utf-8")
+    logging.debug("Derived dest auth {}".format(dest_auth))
     with tempfile.TemporaryDirectory() as tdir:
-        pp(tdir)
+        logging.debug("Cloning from {} into {}".format(source_url, tdir))
+        repo = Repo.clone_from(
+            url=source_url,
+            to_path=tdir,
+            multi_options=[
+                "--config http.extraHeader='Authorization: Basic {}'".format(
+                    source_auth
+                )
+            ],
+        )
+        dest = repo.create_remote(name="final-destination", url=dest_url)
+        logging.debug("Pushing to {}".format(dest_url))
+        dest.push(
+            all=True,
+            tags=True,
+            config="http.extraHeader='Authorization: Basic {}'".format(dest_auth),
+        )
 
 
 @_call_logger
@@ -159,6 +186,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
         dest_url=d_project.http_url_to_repo,
         data=data,
     )
+    logging.debug("Repository migration complete")
 
 
 @_call_logger
