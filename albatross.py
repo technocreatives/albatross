@@ -105,6 +105,7 @@ def migrate(
     source: gitlab.client.Gitlab,
     dest: gitlab.client.Gitlab,
     source_gid: int,
+    session_cookie: str,
     dest_gid: int,
     orphan_gid: int,
     dry_run: bool,
@@ -139,7 +140,7 @@ def migrate(
 
 This tool migrates:\n
     - Group/subgroup structure\n
-    - Projects (including avatar and description)\n
+    - Projects (including avatar* and description)\n
     - Repositories\n
     - Issues\n
     - Merge requests\n
@@ -149,6 +150,9 @@ This tool does NOT migrate:\n
     - Users and special user permissions\n
     - Containers, packages, or infrastructure\n
     - Any CI history
+
+* Avatars are only migrated if a session cookie is provided. Please extract one from a
+session belonging to the same user as the source token.
 
 The tool requires one group ID on the source side and two on the destination side. For
 subgroups on the source side, they can either be recreated as subgroups on the
@@ -184,6 +188,11 @@ Any commandline option can also be given via environment variables. i.e. the
     required=True,
     type=int,
     help="Group ID on the source side to migrate from",
+)
+@click.option(
+    "--session-cookie",
+    type=str,
+    help="Session cookie for the same user as the PAT. If not given, avatars will not be migrated.",
 )
 @click.option("-U", "--dest-url", required=True, help="Instance to write to")
 @click.option(
@@ -223,6 +232,7 @@ def main(
     source_url,
     source_token,
     source_group,
+    session_cookie,
     dest_url,
     dest_token,
     dest_group,
@@ -243,6 +253,7 @@ def main(
         source=source,
         dest=dest,
         source_gid=source_group,
+        session_cookie=session_cookie,
         dest_gid=dest_group,
         orphan_gid=dest_orphan_group,
         dry_run=dry_run,
