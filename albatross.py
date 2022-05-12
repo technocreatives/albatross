@@ -131,14 +131,6 @@ def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
             ],
         )
         dest = repo.create_remote(name="final-destination", url=dest_url)
-        with repo.config_writer() as writer:
-            pp(writer)
-            writer.set_value(
-                section="http",
-                option="extraHeader",
-                value="Authorization: Basic {}".format(dest_auth),
-            )
-            writer.write()
         logging.debug("Pushing to {}".format(dest_url))
         dest.push(all=True)
 
