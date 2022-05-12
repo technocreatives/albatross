@@ -136,14 +136,14 @@ def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
         dest = repo.create_remote(name="final-destination", url=dest_url)
         logging.debug("Adding authorization to repo config")
         repo.git.config(
-            "http.{}.extraHeader".format(data.dest._base_url),
+            "http.extraHeader",
             "Authorization: Basic {}".format(dest_auth),
         )
         logging.debug("Pushing to {}".format(dest_url))
         repo.git.push(
-            "--porcelain",
-            "--all",
             "final-destination",
+            all=True,
+            porcelain=True,
         )
 
 
