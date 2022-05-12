@@ -107,6 +107,12 @@ def migrate_variables(source: Any, dest: Any) -> int:
 
 
 @_call_logger
+def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
+    with tempfile.TemporaryDirectory() as tdir:
+        pp(tdir)
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
@@ -146,6 +152,13 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     num_vars = migrate_variables(source=project, dest=d_project)
     if num_vars > 0:
         logging.info("Migrated {} variables in project {}".format(num_vars, name))
+
+    logging.debug("Starting repository migration")
+    migrate_repo(
+        source_url=project.http_url_to_repo,
+        dest_url=d_project.http_url_to_repo,
+        data=data,
+    )
 
 
 @_call_logger
