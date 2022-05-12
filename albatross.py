@@ -130,9 +130,21 @@ def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
                 )
             ],
         )
+        logging.debug("Pulling LFS history")
+        repo.git.lfs("fetch", "--all")
+        logging.debug("Adding new remote")
         dest = repo.create_remote(name="final-destination", url=dest_url)
+        logging.debug("Adding authorization to repo config")
+        repo.git.config(
+            "http.{}.extraHeader".format(data.dest._base_url),
+            "Authorization: Basic {}".format(dest_auth),
+        )
         logging.debug("Pushing to {}".format(dest_url))
-        dest.push(all=True)
+        repo.git.push(
+            "--porcelain",
+            "--all",
+            "final-destination",
+        )
 
 
 @_call_logger
