@@ -320,15 +320,15 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     )
     logging.debug("Repository migration complete")
 
+    num_ptag = migrate_protected_tags(source=project, dest=d_project)
+    if num_ptag > 0:
+        logging.info("Migrated {} protected tags in project {}".format(num_ptag, name))
+
     num_pbranch = migrate_protected_branches(source=project, dest=d_project)
     if num_pbranch > 0:
         logging.info(
             "Migrated {} protected branches in project {}".format(num_pbranch, name)
         )
-
-    num_ptag = migrate_protected_tags(source=project, dest=d_project)
-    if num_ptag > 0:
-        logging.info("Migrated {} protected tags in project {}".format(num_ptag, name))
 
     (num_stones, data) = migrate_milestones(source=project, dest=d_project, data=data)
     if num_stones > 0:
