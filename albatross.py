@@ -15,6 +15,8 @@ from typing import Any, Callable, Optional, Tuple
 import click
 import gitlab
 import logging
+import math
+import os
 import requests
 import tempfile
 
@@ -113,7 +115,27 @@ def migrate_variables(source: Any, dest: Any) -> int:
 
 
 @_call_logger
-def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
+def migrate_repo(
+    source_url: str, dest_url: str, data: AlbatrossData
+) -> Tuple[str, str]:
+    @_call_logger
+    def dir_size(path):
+        size = 0
+        for root, _, files in os.walk(path):
+            for f in files:
+                size += os.stat(os.path.join(root, f)).st_size
+        return size
+
+    @_call_logger
+    def format_bytes(bts):
+        if bts == 0:
+            return "0B"
+        size_name = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+        i = int(math.floor(math.log(bts, 1024)))
+        p = math.pow(1024, i)
+        s = round(bts / p, 2)
+        return "{}{}".format(s, size_name[i])
+
     source_auth = b64encode(
         (data.source.user.username + ":" + data.source.private_token).encode("utf-8")
     ).decode("utf-8")
@@ -133,10 +155,12 @@ def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
                 )
             ],
         )
+        git_data = dir_size(tdir)
         logging.debug("Pulling LFS history")
         repo.git.lfs("fetch", "--all")
+        lfs_data = dir_size(tdir)
         logging.debug("Adding new remote")
-        dest = repo.create_remote(name="final-destination", url=dest_url)
+        repo.create_remote(name="final-destination", url=dest_url)
         logging.debug("Adding authorization to repo config")
         repo.git.config(
             "http.extraHeader",
@@ -148,6 +172,7 @@ def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
             all=True,
             porcelain=True,
         )
+    return (format_bytes(git_data), format_bytes(lfs_data - git_data))
 
 
 @_call_logger
@@ -297,13 +322,19 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
         logging.info("Migrated {} labels in project {}".format(num_labels, name))
 
     logging.debug("Starting repository migration")
-    migrate_repo(
+    git, lfs = migrate_repo(
         source_url=project.http_url_to_repo,
         dest_url=d_project.http_url_to_repo,
         data=data,
     )
-    logging.debug("Repository migration complete")
-    logging.debug("Letting the destination breathe for {} seconds".format(data.sleep_time))
+    logging.info(
+        "Migrated {} (plus {} in LFS) repository data in project {}".format(
+            git, lfs, name
+        )
+    )
+    logging.debug(
+        "Letting the destination breathe for {} seconds".format(data.sleep_time)
+    )
     sleep(data.sleep_time)
 
     num_ptag = migrate_protected_tags(source=project, dest=d_project)
