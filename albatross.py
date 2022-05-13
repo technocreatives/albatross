@@ -263,16 +263,15 @@ def migrate_milestones(
 ) -> Tuple[int, AlbatrossData]:
     counter = 0
     for stone in source.milestones.list(as_list=False):
-        new_stone = dest.milestones.create(
-            {
-                "title": stone.title,
-                "description": stone.description
-                if stone.description is not None
-                else "",
-                "due_date": stone.due_date if stone.due_date is not None else "",
-                "start_date": stone.start_date if stone.start_date is not None else "",
-            }
-        )
+        args = {
+            "title": stone.title,
+            "description": stone.description,
+        }
+        if stone.due_date is not None:
+            args["due_date"] = stone.due_date
+        if stone.start_date is not None:
+            args["start_date"] = stone.start_date
+        new_stone = dest.milestones.create(args)
         data.milestone_map[stone.id] = new_stone.id
         counter += 1
     return (counter, data)
