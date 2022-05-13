@@ -207,6 +207,22 @@ def migrate_protected_branches(source: Any, dest: Any) -> int:
 
 
 @_call_logger
+def migrate_protected_tags(source: Any, dest: Any) -> int:
+    counter = 0
+    for tag in source.protectedtags.list(as_list=False):
+        dest.protectedtags.create(
+            {
+                "name": tag.name,
+                "create_access_level": tag.create_access_levels[0].access_level
+                if len(tag.create_access_levels) > 0
+                else 0,
+            }
+        )
+        counter += 1
+    return counter
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
@@ -263,7 +279,9 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
             "Migrated {} protected branches in project {}".format(num_pbranch, name)
         )
 
-    # Migrate protected tags
+    num_ptag = migrate_protected_tags(source=project, dest=d_project)
+    if num_ptag > 0:
+        logging.info("Migrated {} protected tags in project {}".format(num_ptag, name))
 
     # Migrate MRs
 
