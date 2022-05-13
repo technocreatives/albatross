@@ -302,7 +302,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     if num_vars > 0:
         logging.info("Migrated {} variables in project {}".format(num_vars, name))
 
-    num_labels = migrate_labels(source=project, dest=d_project, data=data)
+    num_labels = migrate_labels(source=project, dest=d_project)
     if num_labels > 0:
         logging.info("Migrated {} labels in project {}".format(num_labels, name))
 
