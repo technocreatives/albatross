@@ -186,7 +186,10 @@ def migrate_labels(source: Any, dest: Any) -> int:
 @_call_logger
 def migrate_protected_branches(source: Any, dest: Any) -> int:
     counter = 0
+    pre_protected = dest.protectedbranches.list(all=True)
     for rule in source.protectedbranches.list(as_list=False):
+        if any(map(lambda e: e.name == rule.name, pre_protected)):
+            continue
         dest.protectedbranches.create(
             {
                 "name": rule.name,
@@ -209,7 +212,10 @@ def migrate_protected_branches(source: Any, dest: Any) -> int:
 @_call_logger
 def migrate_protected_tags(source: Any, dest: Any) -> int:
     counter = 0
+    pre_protected = dest.protectedtags.list(all=True)
     for tag in source.protectedtags.list(as_list=False):
+        if any(map(lambda e: e.name == tag.name, pre_protected)):
+            continue
         dest.protectedtags.create(
             {
                 "name": tag.name,
