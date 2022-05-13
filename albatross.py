@@ -231,6 +231,16 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     )
     logging.debug("Repository migration complete")
 
+    # Migrate protected branches
+
+    # Migrate protected tags
+
+    # Migrate MRs
+
+    # Migrate Issues
+
+    # Migrate Wikis
+
     num_pipes = halt_ci(project=d_project, data=data)
     if num_pipes > 0:
         logging.info(
