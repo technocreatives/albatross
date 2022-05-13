@@ -149,6 +149,23 @@ def migrate_repo(source_url: str, dest_url: str, data: AlbatrossData) -> None:
 
 
 @_call_logger
+def halt_ci(project: Any) -> int:
+    counter = 0
+    logging.debug(
+        "Halting and destroying all CI jobs for project {}".format(project.name)
+    )
+    for pipe in project.pipelines.list(as_list=False):
+        if pipe.status not in ["success", "failed", "canceled", "skipped"]:
+            logging.debug("Destroying pipeline {}".format(pipe.id))
+            pipe.delete()
+            counter += 1
+        else:
+            logging.debug("Pipeline {} is not pending; no action taken".format(pipe.id))
+
+    return counter
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
@@ -194,6 +211,12 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
         data=data,
     )
     logging.debug("Repository migration complete")
+
+    num_pipes = halt_ci(project=d_project, data=data)
+    if num_pipes > 0:
+        logging.info(
+            "Removed {} pending CI pipelines in project {}".format(num_pipes, name)
+        )
 
 
 @_call_logger
