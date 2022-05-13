@@ -182,6 +182,27 @@ def migrate_labels(source: Any, dest: Any) -> int:
         counter += 1
     return counter
 
+
+@_call_logger
+def migrate_protected_branches(source: Any, dest: Any) -> int:
+    counter = 0
+    for rule in source.protectedbranches.list(as_list=False):
+        dest.protectedbranches.create(
+            {
+                "name": rule.name,
+                "push_access_level": rule.push_access_levels[0].access_level
+                if len(rule.push_access_levels) > 0
+                else 0,
+                "merge_access_level": rule.merge_access_levels[0].access_level
+                if len(rule.merge_access_levels) > 0
+                else 0,
+                "unprotect_access_level": rule.unprotect_access_levels[0].access_level
+                if len(rule.unprotect_access_levels) > 0
+                else 0,
+                "allow_force_push": rule.allow_force_push,
+            }
+        )
+        counter += 1
     return counter
 
 
@@ -236,7 +257,11 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     )
     logging.debug("Repository migration complete")
 
-    # Migrate protected branches
+    num_pbranch = migrate_protected_branches(source=project, dest=d_project)
+    if num_pbranch > 0:
+        logging.info(
+            "Migrated {} protected branches in project {}".format(num_pbranch, name)
+        )
 
     # Migrate protected tags
 
