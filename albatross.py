@@ -10,7 +10,7 @@ from base64 import b64encode
 from git import Repo
 from dataclasses import dataclass
 from pprint import pprint as pp
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Tuple
 import click
 import gitlab
 import logging
@@ -27,6 +27,7 @@ class AlbatrossData:
     orphan_gid: int
     cookie: str
     dry_run: bool
+    milestone_map: dict
 
 
 def _prepare_logger(func: Callable) -> Callable:
@@ -222,10 +223,12 @@ def migrate_protected_tags(source: Any, dest: Any) -> int:
 
 
 @_call_logger
-def migrate_milestones(source: Any, dest: Any) -> int:
+def migrate_milestones(
+    source: Any, dest: Any, data: AlbatrossData
+) -> Tuple[int, AlbatrossData]:
     counter = 0
     for stone in source.milestones.list(as_list=False):
-        dest.milestones.create(
+        new_stone = dest.milestones.create(
             {
                 "title": stone.title,
                 "description": stone.description
@@ -235,8 +238,9 @@ def migrate_milestones(source: Any, dest: Any) -> int:
                 "start_date": stone.start_date if stone.start_date is not None else "",
             }
         )
+        data.milestone_map[stone.id] = new_stone.id
         counter += 1
-    return counter
+    return (counter, data)
 
 
 @_call_logger
@@ -300,7 +304,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     if num_ptag > 0:
         logging.info("Migrated {} protected tags in project {}".format(num_ptag, name))
 
-    num_stones = migrate_milestones(source=project, dest=d_project)
+    (num_stones, data) = migrate_milestones(source=project, dest=d_project, data=data)
     if num_stones > 0:
         logging.info("Migrated {} milestones in project {}".format(num_stones, name))
 
@@ -472,6 +476,7 @@ def main(
         orphan_gid=dest_orphan_group,
         cookie=session_cookie,
         dry_run=dry_run,
+        milestone_map={},
     )
 
     logging.info("Starting migration...")
