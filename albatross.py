@@ -86,7 +86,8 @@ def migrate_avatar(url: str, dest: Any, cookie: str) -> None:
     avatar_req = requests.get(url, cookies={"_gitlab_session": cookie})
     if avatar_req.status_code != 200:
         logging.warning("Failed to retrieve avatar from {}".format(url))
-    dest.avatar = avatar_req.content
+    else:
+        dest.avatar = avatar_req.content
 
 
 @_call_logger
