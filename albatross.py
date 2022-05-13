@@ -169,13 +169,18 @@ def halt_ci(project: Any) -> int:
 def migrate_labels(source: Any, dest: Any) -> int:
     counter = 0
     for label in source.labels.list(as_list=False):
-        dest.labels.create({
-            "name": label.name,
-            "color": label.color,
-            "description": label.description if label.description is not None else "",
-            "priority": label.priority if label.priority is not None else "null",
-        })
+        dest.labels.create(
+            {
+                "name": label.name,
+                "color": label.color,
+                "description": label.description
+                if label.description is not None
+                else "",
+                "priority": label.priority if label.priority is not None else "null",
+            }
+        )
         counter += 1
+    return counter
 
     return counter
 
