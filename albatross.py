@@ -166,6 +166,21 @@ def halt_ci(project: Any) -> int:
 
 
 @_call_logger
+def migrate_labels(source: Any, dest: Any) -> int:
+    counter = 0
+    for label in source.labels.list(as_list=False):
+        dest.labels.create({
+            "name": label.name,
+            "color": label.color,
+            "description": label.description if label.description is not None else "",
+            "priority": label.priority if label.priority is not None else "null",
+        })
+        counter += 1
+
+    return counter
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
@@ -203,6 +218,10 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     num_vars = migrate_variables(source=project, dest=d_project)
     if num_vars > 0:
         logging.info("Migrated {} variables in project {}".format(num_vars, name))
+
+    num_labels = migrate_labels(source=project, dest=d_project, data=data)
+    if num_labels > 0:
+        logging.info("Migrated {} labels in project {}".format(num_labels, name))
 
     logging.debug("Starting repository migration")
     migrate_repo(
@@ -259,12 +278,14 @@ This tool migrates:\n
     - Projects (including avatar* and description)\n
     - Repositories\n
     - Issues\n
+    - Labels\n
     - Merge requests\n
     - CI variables
 
 This tool does NOT migrate:\n
     - Users and special user permissions\n
     - Containers, packages, or infrastructure\n
+    - Boards\n
     - Any CI history
 
 * Avatars are only migrated if a session cookie is provided. Please extract one from a
