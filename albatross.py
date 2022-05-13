@@ -244,6 +244,26 @@ def migrate_milestones(
 
 
 @_call_logger
+def migrate_merge_requests(source: Any, dest: Any, data: AlbatrossData) -> int:
+    counter = 0
+    for mr in source.mergerequests.list(as_list=False, sort="asc"):
+        new_mr = dest.mergerequests.create(
+            {
+                "source_branch": mr.source_branch,
+                "target_branch": mr.target_branch,
+                "title": mr.title,
+                "description": mr.description,
+                "labels": mr.labels,
+                "milestone_id": data.milestone_map[mr.milestone]
+                if mr.milestone is not None
+                else 0,
+            }
+        )
+        counter += 1
+    return counter
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
@@ -308,7 +328,9 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     if num_stones > 0:
         logging.info("Migrated {} milestones in project {}".format(num_stones, name))
 
-    # Migrate MRs
+    num_mrs = migrate_merge_requests(source=project, dest=d_project, data=data)
+    if num_mrs > 0:
+        logging.info("Migrated {} merge requests in project {}".format(num_mrs, name))
 
     # Migrate Issues
 
