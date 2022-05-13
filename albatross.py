@@ -190,13 +190,13 @@ def migrate_protected_branches(source: Any, dest: Any) -> int:
         dest.protectedbranches.create(
             {
                 "name": rule.name,
-                "push_access_level": rule.push_access_levels[0].access_level
+                "push_access_level": rule.push_access_levels[0]["access_level"]
                 if len(rule.push_access_levels) > 0
                 else 0,
-                "merge_access_level": rule.merge_access_levels[0].access_level
+                "merge_access_level": rule.merge_access_levels[0]["access_level"]
                 if len(rule.merge_access_levels) > 0
                 else 0,
-                "unprotect_access_level": rule.unprotect_access_levels[0].access_level
+                "unprotect_access_level": rule.unprotect_access_levels[0]["access_level"]
                 if len(rule.unprotect_access_levels) > 0
                 else 0,
                 "allow_force_push": rule.allow_force_push,
@@ -213,7 +213,7 @@ def migrate_protected_tags(source: Any, dest: Any) -> int:
         dest.protectedtags.create(
             {
                 "name": tag.name,
-                "create_access_level": tag.create_access_levels[0].access_level
+                "create_access_level": tag.create_access_levels[0]["access_level"]
                 if len(tag.create_access_levels) > 0
                 else 0,
             }
