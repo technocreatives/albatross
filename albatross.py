@@ -279,6 +279,29 @@ def migrate_milestones(
 
 
 @_call_logger
+def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> int:
+    counter = 0
+    for issue in source.issues.list(as_list=False, sort="asc"):
+        args = {
+            "name": issue.name,
+            "title": issue.title,
+            "iid": issue.iid,
+            "labels": issue.labels,
+            "issue_type": issue.issue_type,
+            "confidential": issue.confidential,
+            "created_at": issue.created_at,
+            "description": issue.description,
+        }
+        if issue.milestone is not None:
+            args["milestone_id"] = data.milestone_map[issue.milestone]
+        if issue.due_date is not None:
+            args["due_date"] = issue.due_date
+        dest.issues.create(args)
+        counter += 1
+    return counter
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
