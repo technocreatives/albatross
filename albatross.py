@@ -7,9 +7,10 @@ Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
 from base64 import b64encode
-from git import Repo
 from dataclasses import dataclass
+from git import Repo
 from pprint import pprint as pp
+from time import sleep
 from typing import Any, Callable, Optional, Tuple
 import click
 import gitlab
@@ -28,6 +29,7 @@ class AlbatrossData:
     cookie: str
     dry_run: bool
     milestone_map: dict
+    sleep_time: int
 
 
 def _prepare_logger(func: Callable) -> Callable:
@@ -301,6 +303,8 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
         data=data,
     )
     logging.debug("Repository migration complete")
+    logging.debug("Letting the destination breathe for {} seconds".format(data.sleep_time))
+    sleep(data.sleep_time)
 
     num_ptag = migrate_protected_tags(source=project, dest=d_project)
     if num_ptag > 0:
@@ -457,6 +461,13 @@ Any commandline option can also be given via environment variables. i.e. the
 @click.option(
     "--debug", is_flag=True, default=False, help="Print debug output. Implies -v"
 )
+@click.option(
+    "--sleep-time",
+    type=int,
+    default=2,
+    show_default=True,
+    help="Number of seconds to pause after a repository migration to let the destination catch its breath. If you find that branch protection calls fail for no reason, try increasing this.",
+)
 @_prepare_logger
 @_call_logger
 def main(
@@ -471,6 +482,7 @@ def main(
     dry_run,
     verbose,
     debug,
+    sleep_time,
 ) -> None:
 
     logging.info("Opening connection to source")
@@ -488,6 +500,7 @@ def main(
         cookie=session_cookie,
         dry_run=dry_run,
         milestone_map={},
+        sleep_time=sleep_time,
     )
 
     logging.info("Starting migration...")
