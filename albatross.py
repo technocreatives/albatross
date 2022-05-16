@@ -63,6 +63,7 @@ def _prepare_logger(func: Callable) -> Callable:
 
 def _json_dump_helper(data: dict, fd: Any) -> None:
     fd.truncate(0)
+    fd.seek(0)
     json.dump(data, fd, separators=(',', ':'))
     logging.debug("Flushing and syncing statefile content")
     fd.flush()
