@@ -74,11 +74,13 @@ def _wrap_statefile(func: Callable) -> Callable:
             logging.debug("Read state {}".format(state))
 
         data.state_map = state
+        mode = "at" if data.dry_run else "wt"
 
-        with open(statefile, "wt") as f:
+        with open(statefile, mode) as f:
             data.state_file = f
-            json.dump({}, f)
-            f.flush()
+            if not data.dry_run:
+                json.dump({}, f)
+                f.flush()
             return func(*args, **kwargs)
 
     return inner
@@ -544,7 +546,10 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
                     data.state_map[source_id]["id"]
                 )
             )
-            data.dest.projects.delete(data.state_map[source_id]["id"])
+            if not data.dry_run:
+                data.dest.projects.delete(data.state_map[source_id]["id"])
+            else:
+                logging.warning("DRY RUN: project {} will not be deleted".format(project.name))
     else:
         _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
 
