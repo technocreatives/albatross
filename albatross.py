@@ -401,7 +401,13 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     # merged without actually firing the merge. I assume it would be possible if I
     # started doing injections straight into the GitLab database, but... no.
 
-    # Migrate Issues
+    (num_issues, num_notes) = migrate_issues(source=project, dest=d_project)
+    if num_issues > 0:
+        logging.info(
+            "Migrated {} issues, containing {} notes, in project {}".format(
+                num_issues, num_notes, name
+            )
+        )
 
     # Migrate Wikis
 
