@@ -565,6 +565,19 @@ def migrate_projects(
         migrate_project(project=project, dest_gid=dest_gid, data=data)
 
 
+@_call_logger
+def migrate_subgroup(subgroup: Any, dest_gid: int, data: AlbatrossData) -> None:
+    pp(subgroup)
+
+
+@_call_logger
+def migrate_subgroups(
+    subgroup_list: list[Any], dest_gid: int, data: AlbatrossData
+) -> None:
+    for subgroup in subgroup_list:
+        migrate_subgroup(subgroup=subgroup, dest_gid=dest_gid, data=data)
+
+
 @_wrap_statefile
 @_call_logger
 def migrate(data: AlbatrossData) -> None:
@@ -586,7 +599,7 @@ def migrate(data: AlbatrossData) -> None:
         logging.info("No subgroups to migrate")
     else:
         logging.info("Migrating {} subgroups...".format(len(subgroups)))
-        raise NotImplementedError("No subgroup handling just yet")
+        migrate_subgroups(subgroup_list=subgroups, dest_gid=data.main_gid, data=data)
     logging.info("Finished migrating subgroups")
 
 
