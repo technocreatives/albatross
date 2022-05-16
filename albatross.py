@@ -625,7 +625,7 @@ def _create_destination_group(
 def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
     source_id = str(source.id)
     dest_group = None
-    if source.id in data.state_map["group"]:
+    if source_id in data.state_map["group"]:
         logging.info(
             "Group {} ({} -> {}) already successfully migrated".format(
                 source.name, source_id, data.state_map["group"][source_id]["id"]
