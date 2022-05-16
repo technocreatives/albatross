@@ -526,7 +526,7 @@ def _outer_migrate_project(source: Any, dest_gid: int, data: AlbatrossData) -> N
 
 @_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
-    source_id = project.id
+    source_id = str(project.id)
 
     if source_id in data.state_map:
         if data.state_map[source_id]["done"]:
