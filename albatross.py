@@ -75,8 +75,10 @@ def _wrap_statefile(func: Callable) -> Callable:
 
         data.state_map = state
 
-        with open(statefile, "wb") as f:
+        with open(statefile, "wt") as f:
             data.state_file = f
+            json.dump({}, f)
+            f.flush()
             return func(*args, **kwargs)
 
     return inner
