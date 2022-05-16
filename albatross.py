@@ -548,6 +548,10 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
             if not data.dry_run:
                 data.dest.projects.delete(data.state_map[source_id]["id"])
                 del data.state_map[source_id]
+                logging.debug(
+                    "Letting the destination breathe for {} seconds".format(data.sleep_time)
+                )
+                sleep(data.sleep_time)
             else:
                 logging.warning("DRY RUN: project {} will not be deleted".format(project.name))
     _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
