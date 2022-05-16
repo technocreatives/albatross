@@ -535,6 +535,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
                     project.name, source_id, data.state_map[source_id]["id"]
                 )
             )
+            return
         else:
             logging.warning(
                 "Project {} ({} -> {}) incompletely migrated. Deleting and retrying".format(
@@ -548,10 +549,10 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
             )
             if not data.dry_run:
                 data.dest.projects.delete(data.state_map[source_id]["id"])
+                del data.state_map[source_id]
             else:
                 logging.warning("DRY RUN: project {} will not be deleted".format(project.name))
-    else:
-        _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
+    _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
 
 
 @_call_logger
