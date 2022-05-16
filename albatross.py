@@ -171,6 +171,7 @@ def migrate_repo(
             all=True,
             porcelain=True,
         )
+        repo.git.lfs("push", "--all", "final-destination")
     return (format_bytes(git_data), format_bytes(lfs_data - git_data))
 
 
