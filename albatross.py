@@ -91,10 +91,10 @@ def _wrap_migration_state(func: Callable) -> Callable:
         source_id = kwargs["source"].id
         dest_id = kwargs["dest"].id
 
-        data.state[source_id] = {"id": dest_id, "done": False}
+        data.state_map[source_id] = {"id": dest_id, "done": False}
 
         statefile.truncate()
-        json.dump(data.state, statefile)
+        json.dump(data.state_map, statefile)
 
         logging.debug("Flushing and syncing statefile content")
         statefile.flush()
@@ -102,10 +102,10 @@ def _wrap_migration_state(func: Callable) -> Callable:
 
         return_val = func(*args, **kwargs)
 
-        data.state[source_id]["done"] = True
+        data.state_map[source_id]["done"] = True
 
         statefile.truncate()
-        json.dump(data.state, statefile)
+        json.dump(data.state_map, statefile)
 
         logging.debug("Flushing and syncing statefile content")
         statefile.flush()
