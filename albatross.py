@@ -569,6 +569,27 @@ def migrate_projects(
 
 
 @_call_logger
+def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
+    name = source.name
+    path = dest_parent.full_path
+    logging.info("Creating group {} at {}".format(name, path))
+    dest_group = data.dest.groups.create(
+        {"name": name, "path": path, "parent_id": dest_parent.id}
+    )
+    dest_group.description = source.description
+    if source.avatar_url is not None:
+        if data.cookie is not None:
+            migrate_avatar(url=source.avatar_url, dest=dest_group, cookie=data.cookie)
+        else:
+            logging.warning(
+                "Avatar of group {} at {} will not be migrated due to missing session cookie".format(
+                    name, path
+                )
+            )
+    dest_group.save()
+
+
+@_call_logger
 def probe_subtree(group: Any, data: AlbatrossData) -> bool:
     """Returns true if the group contains a project or a group which does. Runs recursively."""
     if len(group.projects.list()) > 0:
@@ -599,6 +620,9 @@ def migrate_subgroup(subgroup: Any, dest_gid: int, data: AlbatrossData) -> None:
             "DRY RUN: group {} ({}) will not be migrated".format(group.name, group.id)
         )
         return
+
+    parent_group = data.dest.groups.get(dest_gid)
+    migrate_group(source=group, dest_parent=parent_group, data=data)
 
 
 @_call_logger
