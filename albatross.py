@@ -78,7 +78,7 @@ def _wrap_statefile(func: Callable) -> Callable:
 
         if os.path.exists(statefile):
             logging.warning("Statefile found. Did a previous run error out?")
-            with open(statefile, "rb") as f:
+            with open(statefile, "rt", encoding="utf-8") as f:
                 state = json.load(f)
             logging.debug("Read state {}".format(state))
 
