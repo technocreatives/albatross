@@ -572,11 +572,19 @@ def migrate_projects(
 @_call_logger
 def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
     name = source.name
-    path = dest_parent.full_path
-    logging.info("Creating group {} at {}".format(name, path))
-    dest_group = data.dest.groups.create(
-        {"name": name, "path": path, "parent_id": dest_parent.id}
+    path = source.path
+    logging.info(
+        "Creating group {} {}".format(
+            name,
+            "inside {}".format(dest_parent.name)
+            if dest_parent is not None
+            else "at instance root",
+        )
     )
+    args = {"name": name, "path": path}
+    if dest_parent is not None:
+        args["parent_id"] = dest_parent.id
+    dest_group = data.dest.groups.create(args)
     dest_group.description = source.description
     if source.avatar_url is not None:
         if data.cookie is not None:
