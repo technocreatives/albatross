@@ -622,8 +622,11 @@ def migrate_subgroup(subgroup: Any, dest_gid: int, data: AlbatrossData) -> None:
         )
         return
 
-    parent_group = data.dest.groups.get(dest_gid)
-    migrate_group(source=group, dest_parent=parent_group, data=data)
+    migrate_group(
+        source=group,
+        dest_parent=data.dest.groups.get(dest_gid) if dest_gid > 0 else None,
+        data=data,
+    )
 
 
 @_call_logger
