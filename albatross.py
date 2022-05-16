@@ -570,8 +570,36 @@ def migrate_projects(
 
 
 @_call_logger
+def probe_subtree(group: Any, data: AlbatrossData) -> bool:
+    """Returns true if the group contains a project or a group which does. Runs recursively."""
+    if len(group.projects.list()) > 0:
+        return True
+    else:
+        for subgroup in group.subgroups.list(as_list=False):
+            if probe_subtree(group=data.source.groups.get(subgroup.id), data=data):
+                return True
+    return False
+
+
+@_call_logger
 def migrate_subgroup(subgroup: Any, dest_gid: int, data: AlbatrossData) -> None:
-    pp(subgroup)
+    logging.debug("Getting true group")
+    group = data.source.groups.get(subgroup.id)
+
+    logging.debug("Ensuring group {} isn't empty".format(group.id))
+    if not probe_subtree(group=group, data=data):
+        logging.warning(
+            "Group {} (id {}, at {}) is empty and will not be migrated".format(
+                group.name, group.id, group.full_path
+            )
+        )
+        return
+
+    if data.dry_run:
+        logging.warning(
+            "DRY RUN: group {} ({}) will not be migrated".format(group.name, group.id)
+        )
+        return
 
 
 @_call_logger
