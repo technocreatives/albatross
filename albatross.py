@@ -73,7 +73,6 @@ def _wrap_statefile(func: Callable) -> Callable:
                 state = json.load(f)
             logging.debug("Read state {}".format(state))
 
-        state["foo"] = "bar"
         data.state_map = state
 
         with open(statefile, "wb") as f:
