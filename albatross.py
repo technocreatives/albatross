@@ -94,20 +94,20 @@ def _wrap_statefile(func: Callable) -> Callable:
     return inner
 
 
-def _wrap_migration_state(func: Callable, style: str, dest_name: str = "dest") -> Callable:
+def _wrap_project_migration_state(func: Callable) -> Callable:
     def inner(*args: tuple, **kwargs: dict) -> Any:
         data = kwargs["data"]
         statefile = data.state_file
         source_id = kwargs["source"].id
-        dest_id = kwargs[dest_name].id
+        dest_id = kwargs["dest"].id
 
-        data.state_map[style][source_id] = {"id": dest_id, "done": False}
+        data.state_map["project"][source_id] = {"id": dest_id, "done": False}
 
         _json_dump_helper(data.state_map, statefile)
 
         return_val = func(*args, **kwargs)
 
-        data.state_map[style][source_id]["done"] = True
+        data.state_map["project"][source_id]["done"] = True
 
         _json_dump_helper(data.state_map, statefile)
 
@@ -116,12 +116,21 @@ def _wrap_migration_state(func: Callable, style: str, dest_name: str = "dest") -
     return inner
 
 
-def _wrap_project_migration_state(func: Callable) -> Callable:
-    return _wrap_migration_state(func=func, style="project")
-
-
 def _wrap_group_migration_state(func: Callable) -> Callable:
-    return _wrap_migration_state(func=func, style="group", dest_name="dest_parent")
+    def inner(*args: tuple, **kwargs: dict) -> Any:
+        data = kwargs["data"]
+        statefile = data.state_file
+        source_id = kwargs["source"].id
+
+        return_val = func(*args, **kwargs)
+
+        data.state_map["group"][source_id] = {"id": return_val.id}
+
+        _json_dump_helper(data.state_map, statefile)
+
+        return return_val
+
+    return inner
 
 
 def _call_logger(func: Callable) -> Callable:
