@@ -93,7 +93,7 @@ def _wrap_migration_state(func: Callable) -> Callable:
 
         data.state_map[source_id] = {"id": dest_id, "done": False}
 
-        statefile.truncate()
+        statefile.truncate(0)
         json.dump(data.state_map, statefile)
 
         logging.debug("Flushing and syncing statefile content")
@@ -104,7 +104,7 @@ def _wrap_migration_state(func: Callable) -> Callable:
 
         data.state_map[source_id]["done"] = True
 
-        statefile.truncate()
+        statefile.truncate(0)
         json.dump(data.state_map, statefile)
 
         logging.debug("Flushing and syncing statefile content")
