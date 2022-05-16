@@ -486,13 +486,14 @@ This tool migrates:\n
     - Repositories\n
     - Issues\n
     - Labels\n
-    - Merge requests\n
+    - Open merge requests\n
     - CI variables
 
 This tool does NOT migrate:\n
     - Users and special user permissions\n
     - Containers, packages, or infrastructure\n
     - Boards\n
+    - Closed/historic merge requests\n
     - Any CI history
 
 * Avatars are only migrated if a session cookie is provided. Please extract one from a
