@@ -26,8 +26,7 @@ class AlbatrossData:
     source: gitlab.client.Gitlab
     dest: gitlab.client.Gitlab
     source_gid: int
-    main_gid: int
-    orphan_gid: int
+    dest_gid: int
     cookie: str
     dry_run: bool
     milestone_map: dict
@@ -622,7 +621,7 @@ def migrate(data: AlbatrossData) -> None:
         logging.info("No orphans to migrate")
     else:
         logging.info("Migrating {} orphans...".format(len(orphans)))
-        migrate_projects(project_list=orphans, dest_gid=data.orphan_gid, data=data)
+        migrate_projects(project_list=orphans, dest_gid=data.dest_gid, data=data)
     logging.info("Finished migrating orphans")
 
     logging.debug("Enumerating subgroups")
@@ -631,7 +630,7 @@ def migrate(data: AlbatrossData) -> None:
         logging.info("No subgroups to migrate")
     else:
         logging.info("Migrating {} subgroups...".format(len(subgroups)))
-        migrate_subgroups(subgroup_list=subgroups, dest_gid=data.main_gid, data=data)
+        migrate_subgroups(subgroup_list=subgroups, dest_gid=data.dest_gid, data=data)
     logging.info("Finished migrating subgroups")
 
 
@@ -657,13 +656,9 @@ This tool does NOT migrate:\n
 * Avatars are only migrated if a session cookie is provided. Please extract one from a
 session belonging to the same user as the source token.
 
-The tool requires one group ID on the source side and two on the destination side. For
-subgroups on the source side, they can either be recreated as subgroups on the
-destination side (given an actual GID) or recreated as groups at the instance root
-(given the special GID 0). Projects that live in the group root on the source side -
-called "orphan projects" - can't be created at the instance root, so will require an
-actual GID on the destination side. Groups which contain no subgroups or projects will
-not be migrated.
+Due to restrictions in the API, new groups can't be created at the root of a GitLab
+instance. Thus, an actual group ID is required on the destination side where all
+migrated projects and subgroups will go.
 
 This tool uses the local system as a staging environment when pulling data from the
 source and pushing to the target. Make sure you have enough disk space available to
@@ -709,14 +704,7 @@ Any commandline option can also be given via environment variables. i.e. the
     "--dest-group",
     required=True,
     type=int,
-    help="Group ID on the destination side to migrate subgroups to. 0 means instance root.",
-)
-@click.option(
-    "-O",
-    "--dest-orphan-group",
-    required=True,
-    type=int,
-    help="Group ID on the destination side to migrate orphaned projects to. Cannot be 0.",
+    help="Group ID on the destination side to migrate to",
 )
 @click.option(
     "-n",
@@ -746,7 +734,6 @@ def main(
     dest_url,
     dest_token,
     dest_group,
-    dest_orphan_group,
     dry_run,
     verbose,
     debug,
@@ -763,8 +750,7 @@ def main(
         source=source,
         dest=dest,
         source_gid=source_group,
-        main_gid=dest_group,
-        orphan_gid=dest_orphan_group,
+        dest_gid=dest_group,
         cookie=session_cookie,
         dry_run=dry_run,
         milestone_map={},
