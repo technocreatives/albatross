@@ -295,23 +295,26 @@ def migrate_notes(source: Any, dest: Any) -> int:
 
 
 @_call_logger
-def migrate_merge_requests(source: Any, dest: Any, data: AlbatrossData) -> int:
+def migrate_merge_requests(
+    source: Any, dest: Any, data: AlbatrossData
+) -> Tuple[int, int]:
     counter = 0
-    for mr in source.mergerequests.list(as_list=False, sort="asc"):
-        new_mr = dest.mergerequests.create(
-            {
-                "source_branch": mr.source_branch,
-                "target_branch": mr.target_branch,
-                "title": mr.title,
-                "description": mr.description,
-                "labels": mr.labels,
-                "milestone_id": data.milestone_map[mr.milestone]
-                if mr.milestone is not None
-                else 0,
-            }
-        )
+    n_counter = 0
+    for mr in source.mergerequests.list(as_list=False, sort="asc", state="opened"):
+        description = "By {}: {}".format(mr.author["name"], mr.description)
+        args = {
+            "source_branch": mr.source_branch,
+            "target_branch": mr.target_branch,
+            "title": mr.title,
+            "description": description,
+            "labels": mr.labels,
+        }
+        if mr.milestone is not None:
+            args["milestone_id"] = data.milestone_map[mr.milestone]
+        new_mr = dest.mergerequests.create(args)
         counter += 1
-    return counter
+        n_counter += migrate_notes(source=mr, dest=new_mr)
+    return (counter, n_counter)
 
 
 @_call_logger
@@ -415,9 +418,15 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     if num_stones > 0:
         logging.info("Migrated {} milestones in project {}".format(num_stones, name))
 
-    num_mrs = migrate_merge_requests(source=project, dest=d_project, data=data)
+    (num_mrs, num_notes) = migrate_merge_requests(
+        source=project, dest=d_project, data=data
+    )
     if num_mrs > 0:
-        logging.info("Migrated {} merge requests in project {}".format(num_mrs, name))
+        logging.info(
+            "Migrated {} open merge requests, containing {} notes, in project {}".format(
+                num_mrs, num_notes, name
+            )
+        )
 
     (num_issues, num_notes) = migrate_issues(source=project, dest=d_project, data=data)
     if num_issues > 0:
