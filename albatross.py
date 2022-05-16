@@ -6,7 +6,6 @@ Albatross - A tool for migrating a GitLab.com group/project to a self-hosted ins
 Copyright (c) 2022 THETC The Techno Creatives AB
 """
 
-from base64 import b64encode
 from dataclasses import dataclass
 from git import Repo
 from pprint import pprint as pp
