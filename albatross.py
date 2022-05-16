@@ -88,7 +88,7 @@ def _wrap_statefile(func: Callable) -> Callable:
         with open(statefile, mode, encoding="utf-8") as f:
             data.state_file = f
             if not data.dry_run:
-                _json_dump_helper({}, f)
+                _json_dump_helper(state, f)
             return func(*args, **kwargs)
 
     return inner
