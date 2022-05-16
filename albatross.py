@@ -136,24 +136,28 @@ def migrate_repo(
         s = round(bts / p, 2)
         return "{}{}".format(s, size_name[i])
 
-    source_auth = b64encode(
-        (data.source.user.username + ":" + data.source.private_token).encode("utf-8")
-    ).decode("utf-8")
-    logging.debug("Derived source auth {}".format(source_auth))
-    dest_auth = b64encode(
-        (data.dest.user.username + ":" + data.dest.private_token).encode("utf-8")
-    ).decode("utf-8")
-    logging.debug("Derived dest auth {}".format(dest_auth))
+    s_url_split = source_url.split("://")
+    source_url = "{}://{}:{}@{}".format(
+        s_url_split[0],
+        data.source.user.username,
+        data.source.private_token,
+        s_url_split[1],
+    )
+    logging.debug("Auth'd source URL: {}".format(source_url))
+
+    d_url_split = dest_url.split("://")
+    dest_url = "{}://{}:{}@{}".format(
+        d_url_split[0],
+        data.dest.user.username,
+        data.dest.private_token,
+        d_url_split[1],
+    )
+    logging.debug("Auth'd dest URL: {}".format(dest_url))
     with tempfile.TemporaryDirectory() as tdir:
         logging.debug("Cloning from {} into {}".format(source_url, tdir))
         repo = Repo.clone_from(
             url=source_url,
             to_path=tdir,
-            multi_options=[
-                "--config http.extraHeader='Authorization: Basic {}'".format(
-                    source_auth
-                )
-            ],
         )
         git_data = dir_size(tdir)
         logging.debug("Pulling LFS history")
@@ -161,11 +165,6 @@ def migrate_repo(
         lfs_data = dir_size(tdir)
         logging.debug("Adding new remote")
         repo.create_remote(name="final-destination", url=dest_url)
-        logging.debug("Adding authorization to repo config")
-        repo.git.config(
-            "http.extraHeader",
-            "Authorization: Basic {}".format(dest_auth),
-        )
         logging.debug("Pushing to {}".format(dest_url))
         repo.git.push(
             "final-destination",
