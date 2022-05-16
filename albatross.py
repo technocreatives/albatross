@@ -113,6 +113,7 @@ def _wrap_migration_state(func: Callable) -> Callable:
 
     return inner
 
+
 def _call_logger(func: Callable) -> Callable:
     """Janky wrapping call logger, for debugging reasons"""
 
@@ -454,9 +455,7 @@ def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
     if num_stones > 0:
         logging.info("Migrated {} milestones in project {}".format(num_stones, name))
 
-    (num_mrs, num_notes) = migrate_merge_requests(
-        source=source, dest=dest, data=data
-    )
+    (num_mrs, num_notes) = migrate_merge_requests(source=source, dest=dest, data=data)
     if num_mrs > 0:
         logging.info(
             "Migrated {} open merge requests, containing {} notes, in project {}".format(
