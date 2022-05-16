@@ -64,7 +64,7 @@ def _prepare_logger(func: Callable) -> Callable:
 def _json_dump_helper(data: dict, fd: Any) -> None:
     fd.truncate(0)
     fd.seek(0)
-    json.dump(data, fd, separators=(',', ':'))
+    json.dump(data, fd, separators=(",", ":"))
     logging.debug("Flushing and syncing statefile content")
     fd.flush()
     os.fsync(fd.fileno())
@@ -549,11 +549,15 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
                 data.dest.projects.delete(data.state_map[source_id]["id"])
                 del data.state_map[source_id]
                 logging.debug(
-                    "Letting the destination breathe for {} seconds".format(data.sleep_time)
+                    "Letting the destination breathe for {} seconds".format(
+                        data.sleep_time
+                    )
                 )
                 sleep(data.sleep_time)
             else:
-                logging.warning("DRY RUN: project {} will not be deleted".format(project.name))
+                logging.warning(
+                    "DRY RUN: project {} will not be deleted".format(project.name)
+                )
     _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
 
 
