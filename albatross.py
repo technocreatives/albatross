@@ -346,6 +346,19 @@ def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, in
 
 
 @_call_logger
+def migrate_wikis(source: Any, dest: Any) -> int:
+    counter = 0
+    for stub in source.wikis.list(as_list=False):
+        wiki = source.wikis.get(stub.slug)
+        args = {"content": wiki.content, "title": wiki.title}
+        if wiki.format is not None:
+            args["format"] = wiki.format
+        dest.wikis.create(args)
+        counter += 1
+    return counter
+
+
+@_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
     s_ns = project.namespace.get("full_path")
@@ -436,7 +449,9 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
             )
         )
 
-    # Migrate Wikis
+    num_wiki = migrate_wikis(source=project, dest=d_project)
+    if num_wiki > 0:
+        logging.info("Migrated {} wiki pages in project {}".format(num_wiki, name))
 
     num_pipes = halt_ci(project=d_project)
     if num_pipes > 0:
