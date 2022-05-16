@@ -522,7 +522,29 @@ def _outer_migrate_project(source: Any, dest_gid: int, data: AlbatrossData) -> N
 
 @_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
-    pass
+    source_id = project.id
+
+    if source_id in data.state_map:
+        if data.state_map[source_id]["done"]:
+            logging.info(
+                "Project {} ({} -> {}) already successfully migrated".format(
+                    project.name, source_id, data.state_map[source_id]["id"]
+                )
+            )
+        else:
+            logging.warning(
+                "Project {} ({} -> {}) incompletely migrated. Deleting and retrying".format(
+                    project.name, source_id, data.state_map[source_id]["id"]
+                )
+            )
+            logging.info(
+                "Deleting project ID {} at the destination".format(
+                    data.state_map[source_id]["id"]
+                )
+            )
+            data.dest.projects.delete(data.state_map[source_id]["id"])
+    else:
+        _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
 
 
 @_call_logger
