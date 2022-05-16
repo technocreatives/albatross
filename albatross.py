@@ -483,9 +483,9 @@ def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
 
 
 @_call_logger
-def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
-    name = project.name
-    s_ns = project.namespace.get("full_path")
+def _outer_migrate_project(source: Any, dest_gid: int, data: AlbatrossData) -> None:
+    name = source.name
+    s_ns = source.namespace.get("full_path")
     d_ns = data.dest.groups.get(dest_gid).full_path
     logging.info(
         "Migrating project {} from source namespace {} to destination namespace {}".format(
@@ -503,11 +503,11 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
 
     logging.debug("Creating project {} in namespace ID {}".format(name, dest_gid))
     d_project = data.dest.projects.create({"name": name, "namespace_id": dest_gid})
-    d_project.description = project.description
+    d_project.description = source.description
 
-    if project.avatar_url is not None:
+    if source.avatar_url is not None:
         if data.cookie is not None:
-            migrate_avatar(url=project.avatar_url, dest=d_project, cookie=data.cookie)
+            migrate_avatar(url=source.avatar_url, dest=d_project, cookie=data.cookie)
         else:
             logging.warning(
                 "Avatar of project {} in namespace {} will not be migrated due to missing session cookie".format(
@@ -517,7 +517,12 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
 
     d_project.save()
 
-    _inner_migrate_project(source=project, dest=d_project, data=data)
+    _inner_migrate_project(source=source, dest=d_project, data=data)
+
+
+@_call_logger
+def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
+    pass
 
 
 @_call_logger
