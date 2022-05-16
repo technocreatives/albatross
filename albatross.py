@@ -295,6 +295,26 @@ def migrate_notes(source: Any, dest: Any) -> int:
 
 
 @_call_logger
+def migrate_merge_requests(source: Any, dest: Any, data: AlbatrossData) -> int:
+    counter = 0
+    for mr in source.mergerequests.list(as_list=False, sort="asc"):
+        new_mr = dest.mergerequests.create(
+            {
+                "source_branch": mr.source_branch,
+                "target_branch": mr.target_branch,
+                "title": mr.title,
+                "description": mr.description,
+                "labels": mr.labels,
+                "milestone_id": data.milestone_map[mr.milestone]
+                if mr.milestone is not None
+                else 0,
+            }
+        )
+        counter += 1
+    return counter
+
+
+@_call_logger
 def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, int]:
     counter = 0
     n_counter = 0
@@ -395,10 +415,9 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     if num_stones > 0:
         logging.info("Migrated {} milestones in project {}".format(num_stones, name))
 
-    # This is where I'd migrate merge requests, if I could. Unfortunately, due to
-    # limitations in the API, there's no way to backdate a merge request, or mark it as
-    # merged without actually firing the merge. I assume it would be possible if I
-    # started doing injections straight into the GitLab database, but... no.
+    num_mrs = migrate_merge_requests(source=project, dest=d_project, data=data)
+    if num_mrs > 0:
+        logging.info("Migrated {} merge requests in project {}".format(num_mrs, name))
 
     (num_issues, num_notes) = migrate_issues(source=project, dest=d_project, data=data)
     if num_issues > 0:
@@ -458,13 +477,13 @@ This tool migrates:\n
     - Repositories\n
     - Issues\n
     - Labels\n
+    - Merge requests\n
     - CI variables
 
 This tool does NOT migrate:\n
     - Users and special user permissions\n
     - Containers, packages, or infrastructure\n
     - Boards\n
-    - Merge requests\n
     - Any CI history
 
 * Avatars are only migrated if a session cookie is provided. Please extract one from a
