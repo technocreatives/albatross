@@ -543,28 +543,28 @@ def _outer_migrate_project(source: Any, dest_gid: int, data: AlbatrossData) -> N
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     source_id = str(project.id)
 
-    if source_id in data.state_map:
-        if data.state_map[source_id]["done"]:
+    if source_id in data.state_map["project"]:
+        if data.state_map["project"][source_id]["done"]:
             logging.info(
                 "Project {} ({} -> {}) already successfully migrated".format(
-                    project.name, source_id, data.state_map[source_id]["id"]
+                    project.name, source_id, data.state_map["project"][source_id]["id"]
                 )
             )
             return
         else:
             logging.warning(
                 "Project {} ({} -> {}) incompletely migrated. Deleting and retrying".format(
-                    project.name, source_id, data.state_map[source_id]["id"]
+                    project.name, source_id, data.state_map["project"][source_id]["id"]
                 )
             )
             logging.info(
                 "Deleting project ID {} at the destination".format(
-                    data.state_map[source_id]["id"]
+                    data.state_map["project"][source_id]["id"]
                 )
             )
             if not data.dry_run:
-                data.dest.projects.delete(data.state_map[source_id]["id"])
-                del data.state_map[source_id]
+                data.dest.projects.delete(data.state_map["project"][source_id]["id"])
+                del data.state_map["project"][source_id]
                 logging.debug(
                     "Letting the destination breathe for {} seconds".format(
                         data.sleep_time
