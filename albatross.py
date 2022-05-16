@@ -73,7 +73,7 @@ def _json_dump_helper(data: dict, fd: Any) -> None:
 def _wrap_statefile(func: Callable) -> Callable:
     def inner(*args: tuple, **kwargs: dict) -> Any:
         statefile = ".albatross-state"
-        state = {}
+        state = {"group": {}, "project": {}}
         data = kwargs["data"]
 
         if os.path.exists(statefile):
@@ -94,26 +94,34 @@ def _wrap_statefile(func: Callable) -> Callable:
     return inner
 
 
-def _wrap_migration_state(func: Callable) -> Callable:
+def _wrap_migration_state(func: Callable, style: str, dest_name: str = "dest") -> Callable:
     def inner(*args: tuple, **kwargs: dict) -> Any:
         data = kwargs["data"]
         statefile = data.state_file
         source_id = kwargs["source"].id
-        dest_id = kwargs["dest"].id
+        dest_id = kwargs[dest_name].id
 
-        data.state_map[source_id] = {"id": dest_id, "done": False}
+        data.state_map[style][source_id] = {"id": dest_id, "done": False}
 
         _json_dump_helper(data.state_map, statefile)
 
         return_val = func(*args, **kwargs)
 
-        data.state_map[source_id]["done"] = True
+        data.state_map[style][source_id]["done"] = True
 
         _json_dump_helper(data.state_map, statefile)
 
         return return_val
 
     return inner
+
+
+def _wrap_project_migration_state(func: Callable) -> Callable:
+    return _wrap_migration_state(func=func, style="project")
+
+
+def _wrap_group_migration_state(func: Callable) -> Callable:
+    return _wrap_migration_state(func=func, style="group", dest_name="dest_parent")
 
 
 def _call_logger(func: Callable) -> Callable:
@@ -415,7 +423,7 @@ def migrate_wikis(source: Any, dest: Any) -> int:
     return counter
 
 
-@_wrap_migration_state
+@_wrap_project_migration_state
 @_call_logger
 def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
     name = source.name
@@ -569,6 +577,7 @@ def migrate_projects(
         migrate_project(project=project, dest_gid=dest_gid, data=data)
 
 
+@_wrap_group_migration_state
 @_call_logger
 def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
     name = source.name
