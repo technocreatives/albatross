@@ -621,9 +621,19 @@ def _create_destination_group(
 
 @_call_logger
 def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
-    dest_group = _create_destination_group(
-        source=source, dest_parent=dest_parent, data=data
-    )
+    source_id = str(source.id)
+    dest_group = None
+    if source.id in data.state_map["group"]:
+        logging.info(
+            "Group {} ({} -> {}) already successfully migrated".format(
+                source.name, source_id, data.state_map["group"][source_id]["id"]
+            )
+        )
+        dest_group = data.dest.groups.get(data.state_map["group"][source_id]["id"])
+    else:
+        dest_group = _create_destination_group(
+            source=source, dest_parent=dest_parent, data=data
+        )
     logging.debug("Iterating over projects of source group {}".format(source.id))
     migrate_projects(
         project_list=source.projects.list(all=True), dest_gid=dest_group.id, data=data
