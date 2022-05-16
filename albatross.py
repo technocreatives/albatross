@@ -13,6 +13,7 @@ from time import sleep
 from typing import Any, Callable, Optional, Tuple
 import click
 import gitlab
+import json
 import logging
 import math
 import os
@@ -30,6 +31,8 @@ class AlbatrossData:
     cookie: str
     dry_run: bool
     milestone_map: dict
+    state_map: dict
+    state_file: Any
     sleep_time: int
 
 
@@ -54,6 +57,28 @@ def _prepare_logger(func: Callable) -> Callable:
         logging.debug("Logging started")
 
         return func(*args, **kwargs)
+
+    return inner
+
+
+def _wrap_statefile(func: Callable) -> Callable:
+    def inner(*args: tuple, **kwargs: dict) -> Any:
+        statefile = ".albatross-state"
+        state = {}
+        data = kwargs["data"]
+
+        if os.path.exists(statefile):
+            logging.warning("Statefile found. Did a previous run error out?")
+            with open(statefile, "rb") as f:
+                state = json.load(f)
+            logging.debug("Read state {}".format(state))
+
+        state["foo"] = "bar"
+        data.state_map = state
+
+        with open(statefile, "wb") as f:
+            data.state_file = f
+            return func(*args, **kwargs)
 
     return inner
 
@@ -467,6 +492,7 @@ def migrate_projects(
         migrate_project(project=project, dest_gid=dest_gid, data=data)
 
 
+@_wrap_statefile
 @_call_logger
 def migrate(data: AlbatrossData) -> None:
     logging.debug("Retrieving source group")
@@ -624,11 +650,13 @@ def main(
         cookie=session_cookie,
         dry_run=dry_run,
         milestone_map={},
+        state_map={},
+        state_file=None,
         sleep_time=sleep_time,
     )
 
     logging.info("Starting migration...")
-    migrate(data)
+    migrate(data=data)
 
     logging.info("Migration complete")
 
