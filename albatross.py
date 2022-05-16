@@ -61,6 +61,14 @@ def _prepare_logger(func: Callable) -> Callable:
     return inner
 
 
+def _json_dump_helper(data: dict, fd: Any) -> None:
+    fd.truncate(0)
+    json.dump(data, fd, separators=(',', ':'))
+    logging.debug("Flushing and syncing statefile content")
+    fd.flush()
+    os.fsync(fd.fileno())
+
+
 def _wrap_statefile(func: Callable) -> Callable:
     def inner(*args: tuple, **kwargs: dict) -> Any:
         statefile = ".albatross-state"
@@ -76,11 +84,10 @@ def _wrap_statefile(func: Callable) -> Callable:
         data.state_map = state
         mode = "at" if data.dry_run else "wt"
 
-        with open(statefile, mode) as f:
+        with open(statefile, mode, encoding="utf-8") as f:
             data.state_file = f
             if not data.dry_run:
-                json.dump({}, f)
-                f.flush()
+                _json_dump_helper({}, f)
             return func(*args, **kwargs)
 
     return inner
@@ -95,23 +102,13 @@ def _wrap_migration_state(func: Callable) -> Callable:
 
         data.state_map[source_id] = {"id": dest_id, "done": False}
 
-        statefile.truncate(0)
-        json.dump(data.state_map, statefile)
-
-        logging.debug("Flushing and syncing statefile content")
-        statefile.flush()
-        os.fsync(statefile.fileno())
+        _json_dump_helper(data.state_map, statefile)
 
         return_val = func(*args, **kwargs)
 
         data.state_map[source_id]["done"] = True
 
-        statefile.truncate(0)
-        json.dump(data.state_map, statefile)
-
-        logging.debug("Flushing and syncing statefile content")
-        statefile.flush()
-        os.fsync(statefile.fileno())
+        _json_dump_helper(data.state_map, statefile)
 
         return return_val
 
