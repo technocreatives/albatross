@@ -588,7 +588,9 @@ def migrate_projects(
 
 @_wrap_group_migration_state
 @_call_logger
-def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
+def _create_destination_group(
+    source: Any, dest_parent: Any, data: AlbatrossData
+) -> Any:
     name = source.name
     path = source.path
     logging.info(
@@ -614,6 +616,27 @@ def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
                 )
             )
     dest_group.save()
+    return dest_group
+
+
+@_call_logger
+def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
+    dest_group = _create_destination_group(
+        source=source, dest_parent=dest_parent, data=data
+    )
+    logging.debug("Iterating over projects of source group {}".format(source.id))
+    migrate_projects(
+        project_list=source.projects.list(all=True), dest_gid=dest_group.id, data=data
+    )
+    logging.debug("Iterating over subgroups of source group {}".format(source.id))
+    migrate_subgroups(
+        subgroup_list=source.subgroups.list(all=True), dest_gid=dest_group.id, data=data
+    )
+    logging.info(
+        "Finished migrating group tree of {} (ID {} -> {})".format(
+            source.name, source.id, dest_group.id
+        )
+    )
 
 
 @_call_logger
