@@ -299,15 +299,15 @@ def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, in
     counter = 0
     n_counter = 0
     for issue in source.issues.list(as_list=False, sort="asc"):
+        description = "By {}: {}".format(issue.author.name, issue.description)
         args = {
-            "name": issue.name,
             "title": issue.title,
             "iid": issue.iid,
             "labels": issue.labels,
             "issue_type": issue.issue_type,
             "confidential": issue.confidential,
             "created_at": issue.created_at,
-            "description": issue.description,
+            "description": description,
         }
         if issue.milestone is not None:
             args["milestone_id"] = data.milestone_map[issue.milestone]
