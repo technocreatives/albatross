@@ -83,6 +83,37 @@ def _wrap_statefile(func: Callable) -> Callable:
     return inner
 
 
+def _wrap_migration_state(func: Callable) -> Callable:
+    def inner(*args: tuple, **kwargs: dict) -> Any:
+        data = kwargs["data"]
+        statefile = data.state_file
+        source_id = kwargs["source"].id
+        dest_id = kwargs["dest"].id
+
+        data.state[source_id] = {"id": dest_id, "done": False}
+
+        statefile.truncate()
+        json.dump(data.state, statefile)
+
+        logging.debug("Flushing and syncing statefile content")
+        statefile.flush()
+        os.fsync(statefile.fileno())
+
+        return_val = func(*args, **kwargs)
+
+        data.state[source_id]["done"] = True
+
+        statefile.truncate()
+        json.dump(data.state, statefile)
+
+        logging.debug("Flushing and syncing statefile content")
+        statefile.flush()
+        os.fsync(statefile.fileno())
+
+        return return_val
+
+    return inner
+
 def _call_logger(func: Callable) -> Callable:
     """Janky wrapping call logger, for debugging reasons"""
 
@@ -382,6 +413,77 @@ def migrate_wikis(source: Any, dest: Any) -> int:
     return counter
 
 
+@_wrap_migration_state
+@_call_logger
+def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
+    name = source.name
+    num_vars = migrate_variables(source=source, dest=dest)
+    if num_vars > 0:
+        logging.info("Migrated {} variables in project {}".format(num_vars, name))
+
+    num_labels = migrate_labels(source=source, dest=dest)
+    if num_labels > 0:
+        logging.info("Migrated {} labels in project {}".format(num_labels, name))
+
+    logging.debug("Starting repository migration")
+    git, lfs = migrate_repo(
+        source_url=source.http_url_to_repo,
+        dest_url=dest.http_url_to_repo,
+        data=data,
+    )
+    logging.info(
+        "Migrated {} (plus {} in LFS) repository data in project {}".format(
+            git, lfs, name
+        )
+    )
+    logging.debug(
+        "Letting the destination breathe for {} seconds".format(data.sleep_time)
+    )
+    sleep(data.sleep_time)
+
+    num_ptag = migrate_protected_tags(source=source, dest=dest)
+    if num_ptag > 0:
+        logging.info("Migrated {} protected tags in project {}".format(num_ptag, name))
+
+    num_pbranch = migrate_protected_branches(source=source, dest=dest)
+    if num_pbranch > 0:
+        logging.info(
+            "Migrated {} protected branches in project {}".format(num_pbranch, name)
+        )
+
+    (num_stones, data) = migrate_milestones(source=source, dest=dest, data=data)
+    if num_stones > 0:
+        logging.info("Migrated {} milestones in project {}".format(num_stones, name))
+
+    (num_mrs, num_notes) = migrate_merge_requests(
+        source=source, dest=dest, data=data
+    )
+    if num_mrs > 0:
+        logging.info(
+            "Migrated {} open merge requests, containing {} notes, in project {}".format(
+                num_mrs, num_notes, name
+            )
+        )
+
+    (num_issues, num_notes) = migrate_issues(source=source, dest=dest, data=data)
+    if num_issues > 0:
+        logging.info(
+            "Migrated {} issues, containing {} notes, in project {}".format(
+                num_issues, num_notes, name
+            )
+        )
+
+    num_wiki = migrate_wikis(source=source, dest=dest)
+    if num_wiki > 0:
+        logging.info("Migrated {} wiki pages in project {}".format(num_wiki, name))
+
+    num_pipes = halt_ci(source=dest)
+    if num_pipes > 0:
+        logging.info(
+            "Removed {} pending CI pipelines in project {}".format(num_pipes, name)
+        )
+
+
 @_call_logger
 def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = project.name
@@ -417,71 +519,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
 
     d_project.save()
 
-    num_vars = migrate_variables(source=project, dest=d_project)
-    if num_vars > 0:
-        logging.info("Migrated {} variables in project {}".format(num_vars, name))
-
-    num_labels = migrate_labels(source=project, dest=d_project)
-    if num_labels > 0:
-        logging.info("Migrated {} labels in project {}".format(num_labels, name))
-
-    logging.debug("Starting repository migration")
-    git, lfs = migrate_repo(
-        source_url=project.http_url_to_repo,
-        dest_url=d_project.http_url_to_repo,
-        data=data,
-    )
-    logging.info(
-        "Migrated {} (plus {} in LFS) repository data in project {}".format(
-            git, lfs, name
-        )
-    )
-    logging.debug(
-        "Letting the destination breathe for {} seconds".format(data.sleep_time)
-    )
-    sleep(data.sleep_time)
-
-    num_ptag = migrate_protected_tags(source=project, dest=d_project)
-    if num_ptag > 0:
-        logging.info("Migrated {} protected tags in project {}".format(num_ptag, name))
-
-    num_pbranch = migrate_protected_branches(source=project, dest=d_project)
-    if num_pbranch > 0:
-        logging.info(
-            "Migrated {} protected branches in project {}".format(num_pbranch, name)
-        )
-
-    (num_stones, data) = migrate_milestones(source=project, dest=d_project, data=data)
-    if num_stones > 0:
-        logging.info("Migrated {} milestones in project {}".format(num_stones, name))
-
-    (num_mrs, num_notes) = migrate_merge_requests(
-        source=project, dest=d_project, data=data
-    )
-    if num_mrs > 0:
-        logging.info(
-            "Migrated {} open merge requests, containing {} notes, in project {}".format(
-                num_mrs, num_notes, name
-            )
-        )
-
-    (num_issues, num_notes) = migrate_issues(source=project, dest=d_project, data=data)
-    if num_issues > 0:
-        logging.info(
-            "Migrated {} issues, containing {} notes, in project {}".format(
-                num_issues, num_notes, name
-            )
-        )
-
-    num_wiki = migrate_wikis(source=project, dest=d_project)
-    if num_wiki > 0:
-        logging.info("Migrated {} wiki pages in project {}".format(num_wiki, name))
-
-    num_pipes = halt_ci(project=d_project)
-    if num_pipes > 0:
-        logging.info(
-            "Removed {} pending CI pipelines in project {}".format(num_pipes, name)
-        )
+    _inner_migrate_project(source=project, dest=d_project, data=data)
 
 
 @_call_logger
