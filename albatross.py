@@ -278,8 +278,27 @@ def migrate_milestones(
 
 
 @_call_logger
-def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> int:
+def migrate_notes(source: Any, dest: Any) -> int:
     counter = 0
+    for note in source.notes.list(as_list=False):
+        body = "{}By {}: {}".format(
+            "[SYSTEM NOTE] " if note.system else "", note.author.name, note.body
+        )
+        dest.notes.create(
+            {
+                "body": body,
+                "confidential": note.confidential,
+                "created_at": note.created_at,
+            }
+        )
+        counter += 1
+    return counter
+
+
+@_call_logger
+def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, int]:
+    counter = 0
+    n_counter = 0
     for issue in source.issues.list(as_list=False, sort="asc"):
         args = {
             "name": issue.name,
@@ -295,9 +314,13 @@ def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> int:
             args["milestone_id"] = data.milestone_map[issue.milestone]
         if issue.due_date is not None:
             args["due_date"] = issue.due_date
-        dest.issues.create(args)
+        d_issue = dest.issues.create(args)
         counter += 1
-    return counter
+        n_counter += migrate_notes(source=issue, dest=d_issue)
+        if issue.state == "closed":
+            d_issue.state_event = "close"
+        d_issue.save()
+    return (counter, n_counter)
 
 
 @_call_logger
