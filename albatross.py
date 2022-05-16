@@ -477,7 +477,7 @@ def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
     if num_wiki > 0:
         logging.info("Migrated {} wiki pages in project {}".format(num_wiki, name))
 
-    num_pipes = halt_ci(source=dest)
+    num_pipes = halt_ci(project=dest)
     if num_pipes > 0:
         logging.info(
             "Removed {} pending CI pipelines in project {}".format(num_pipes, name)
