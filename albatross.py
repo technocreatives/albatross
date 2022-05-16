@@ -281,7 +281,7 @@ def migrate_notes(source: Any, dest: Any) -> int:
     counter = 0
     for note in source.notes.list(as_list=False):
         body = "{}By {}: {}".format(
-            "[SYSTEM NOTE] " if note.system else "", note.author.name, note.body
+            "[SYSTEM NOTE] " if note.system else "", note.author["name"], note.body
         )
         dest.notes.create(
             {
@@ -299,7 +299,7 @@ def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, in
     counter = 0
     n_counter = 0
     for issue in source.issues.list(as_list=False, sort="asc"):
-        description = "By {}: {}".format(issue.author.name, issue.description)
+        description = "By {}: {}".format(issue.author["name"], issue.description)
         args = {
             "title": issue.title,
             "iid": issue.iid,
