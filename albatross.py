@@ -552,6 +552,8 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
             )
             return
         else:
+            logging.debug("Ensuring the one, true project")
+            project = data.source.projects.get(project.id)
             logging.warning(
                 "Project {} ({} -> {}) incompletely migrated. Deleting and retrying".format(
                     project.name, source_id, data.state_map["project"][source_id]["id"]
