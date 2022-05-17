@@ -403,9 +403,18 @@ def migrate_wikis(source: Any, dest: Any) -> int:
 @_call_logger
 def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
     name = source.name
-    num_vars = migrate_variables(source=source, dest=dest)
-    if num_vars > 0:
-        logging.info("Migrated {} variables in project {}".format(num_vars, name))
+    archived: bool = source.archived
+    if archived:
+        logging.info("Project {} is archived - migration will be reduced".format(name))
+
+    if archived:
+        logging.debug(
+            "Project {} is archived - will not migrate variables".format(name)
+        )
+    else:
+        num_vars = migrate_variables(source=source, dest=dest)
+        if num_vars > 0:
+            logging.info("Migrated {} variables in project {}".format(num_vars, name))
 
     num_labels = migrate_labels(source=source, dest=dest)
     if num_labels > 0:
@@ -463,6 +472,10 @@ def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
         logging.info(
             "Removed {} pending CI pipelines in project {}".format(num_pipes, name)
         )
+
+    if archived:
+        dest.archive()
+        logging.info("Archived destination project {}".format(name))
 
 
 @_call_logger
