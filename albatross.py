@@ -594,9 +594,24 @@ def create_destination_group(source: Any, dest_parent: Any, data: AlbatrossData)
             else "at instance root",
         )
     )
-    args = {"name": name, "path": path}
+    args = {
+        "name": name,
+        "path": path,
+        "description": source.description,
+        "lfs_enabled": source.lfs_enabled,
+        "project_creation_level": source.project_creation_level,
+        "request_access_enabled": source.request_access_enabled,
+        "share_with_group_lock": source.share_with_group_lock,
+        "visibility": source.visibility,
+    }
     if dest_parent is not None:
         args["parent_id"] = dest_parent.id
+    if source.default_branch_protection is not None:
+        args["default_branch_protection"] = source.default_branch_protection
+    if source.emails_disabled is not None:
+        args["emails_disabled"] = source.emails_disabled
+    if source.mentions_disabled is not None:
+        args["mentions_disabled"] = source.mentions_disabled
     dest_group = data.dest.groups.create(args)
     dest_group.description = source.description
     if source.avatar_url is not None:
