@@ -94,28 +94,6 @@ def _wrap_statefile(func: Callable) -> Callable:
     return inner
 
 
-def _wrap_project_migration_state(func: Callable) -> Callable:
-    def inner(*args: tuple, **kwargs: dict) -> Any:
-        data = kwargs["data"]
-        statefile = data.state_file
-        source_id = kwargs["source"].id
-        dest_id = kwargs["dest"].id
-
-        data.state_map["project"][source_id] = {"id": dest_id, "done": False}
-
-        _json_dump_helper(data.state_map, statefile)
-
-        return_val = func(*args, **kwargs)
-
-        data.state_map["project"][source_id]["done"] = True
-
-        _json_dump_helper(data.state_map, statefile)
-
-        return return_val
-
-    return inner
-
-
 def _call_logger(func: Callable) -> Callable:
     """Janky wrapping call logger, for debugging reasons"""
 
@@ -415,9 +393,8 @@ def migrate_wikis(source: Any, dest: Any) -> int:
     return counter
 
 
-@_wrap_project_migration_state
 @_call_logger
-def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
+def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
     name = source.name
     num_vars = migrate_variables(source=source, dest=dest)
     if num_vars > 0:
@@ -484,8 +461,20 @@ def _inner_migrate_project(source: Any, dest: Any, data: AlbatrossData) -> None:
         )
 
 
+def migrate_project_fill_with_state(
+    source: Any, dest: Any, data: AlbatrossData
+) -> None:
+    data.state_map["project"][source.id] = {"id": dest.id, "done": False}
+    _json_dump_helper(data.state_map, data.state_file)
+
+    migrate_project_fill(source=source, dest=dest, data=data)
+
+    data.state_map["project"][source.id]["done"] = True
+    _json_dump_helper(data.state_map, data.state_file)
+
+
 @_call_logger
-def _outer_migrate_project(source: Any, dest_gid: int, data: AlbatrossData) -> None:
+def migrate_project_create(source: Any, dest_gid: int, data: AlbatrossData) -> None:
     name = source.name
     s_ns = source.namespace.get("full_path")
     d_ns = data.dest.groups.get(dest_gid).full_path
@@ -519,7 +508,7 @@ def _outer_migrate_project(source: Any, dest_gid: int, data: AlbatrossData) -> N
 
     d_project.save()
 
-    _inner_migrate_project(source=source, dest=d_project, data=data)
+    migrate_project_fill_with_state(source=source, dest=d_project, data=data)
 
 
 @_call_logger
@@ -560,7 +549,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
                 )
     logging.debug("Ensuring the one, true project")
     project = data.source.projects.get(project.id)
-    _outer_migrate_project(source=project, dest_gid=dest_gid, data=data)
+    migrate_project_create(source=project, dest_gid=dest_gid, data=data)
 
 
 @_call_logger
