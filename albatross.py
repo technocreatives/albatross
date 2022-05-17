@@ -465,6 +465,7 @@ def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
         )
 
 
+@_call_logger
 def migrate_project_fill_with_state(
     source: Any, dest: Any, data: AlbatrossData
 ) -> None:
