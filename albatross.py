@@ -70,6 +70,13 @@ def _json_dump_helper(data: dict, fd: Any) -> None:
     os.fsync(fd.fileno())
 
 
+def _pause(data: AlbatrossData) -> None:
+    logging.debug(
+        "Letting the destination breathe for {} seconds".format(data.sleep_time)
+    )
+    sleep(data.sleep_time)
+
+
 def _wrap_statefile(func: Callable) -> Callable:
     def inner(*args: tuple, **kwargs: dict) -> Any:
         statefile = ".albatross-state"
@@ -415,10 +422,7 @@ def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
             git, lfs, name
         )
     )
-    logging.debug(
-        "Letting the destination breathe for {} seconds".format(data.sleep_time)
-    )
-    sleep(data.sleep_time)
+    _pause(data)
 
     num_ptag = migrate_protected_tags(source=source, dest=dest)
     if num_ptag > 0:
@@ -537,12 +541,7 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
             if not data.dry_run:
                 data.dest.projects.delete(data.state_map["project"][source_id]["id"])
                 del data.state_map["project"][source_id]
-                logging.debug(
-                    "Letting the destination breathe for {} seconds".format(
-                        data.sleep_time
-                    )
-                )
-                sleep(data.sleep_time)
+                _pause(data)
             else:
                 logging.warning(
                     "DRY RUN: project {} will not be deleted".format(project.name)
