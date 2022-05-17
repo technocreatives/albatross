@@ -548,6 +548,15 @@ def migrate_project(project: Any, dest_gid: int, data: AlbatrossData) -> None:
                 )
     logging.debug("Ensuring the one, true project")
     project = data.source.projects.get(project.id)
+
+    if len(project.branches.list(all=True)) == 0:
+        logging.warning(
+            "Project {} ({}) contains no branches and will not be migrated".format(
+                project.name, source_id
+            )
+        )
+        return
+
     migrate_project_create(source=project, dest_gid=dest_gid, data=data)
 
 
