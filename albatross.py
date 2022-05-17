@@ -116,23 +116,6 @@ def _wrap_project_migration_state(func: Callable) -> Callable:
     return inner
 
 
-def _wrap_group_migration_state(func: Callable) -> Callable:
-    def inner(*args: tuple, **kwargs: dict) -> Any:
-        data = kwargs["data"]
-        statefile = data.state_file
-        source_id = kwargs["source"].id
-
-        return_val = func(*args, **kwargs)
-
-        data.state_map["group"][source_id] = {"id": return_val.id}
-
-        _json_dump_helper(data.state_map, statefile)
-
-        return return_val
-
-    return inner
-
-
 def _call_logger(func: Callable) -> Callable:
     """Janky wrapping call logger, for debugging reasons"""
 
@@ -588,11 +571,8 @@ def migrate_projects(
         migrate_project(project=project, dest_gid=dest_gid, data=data)
 
 
-@_wrap_group_migration_state
 @_call_logger
-def _create_destination_group(
-    source: Any, dest_parent: Any, data: AlbatrossData
-) -> Any:
+def create_destination_group(source: Any, dest_parent: Any, data: AlbatrossData) -> Any:
     name = source.name
     path = source.path
     logging.info(
@@ -622,6 +602,20 @@ def _create_destination_group(
 
 
 @_call_logger
+def create_destination_group_with_state(
+    source: Any, dest_parent: Any, data: AlbatrossData
+) -> Any:
+    dest_group = create_destination_group(
+        source=source, dest_parent=dest_parent, data=data
+    )
+
+    data.state_map["group"][source.id] = {"id": dest_group.id}
+    _json_dump_helper(data.state_map, data.state_file)
+
+    return dest_group
+
+
+@_call_logger
 def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
     source_id = str(source.id)
     dest_group = None
@@ -633,7 +627,7 @@ def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
         )
         dest_group = data.dest.groups.get(data.state_map["group"][source_id]["id"])
     else:
-        dest_group = _create_destination_group(
+        dest_group = create_destination_group_with_state(
             source=source, dest_parent=dest_parent, data=data
         )
     logging.debug("Iterating over projects of source group {}".format(source.id))
