@@ -377,7 +377,7 @@ def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, in
             "description": description,
         }
         if issue.milestone is not None:
-            args["milestone_id"] = data.milestone_map[issue.milestone]
+            args["milestone_id"] = data.milestone_map[issue.milestone["id"]]
         if issue.due_date is not None:
             args["due_date"] = issue.due_date
         d_issue = dest.issues.create(args)
