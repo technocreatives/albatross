@@ -209,12 +209,12 @@ def migrate_repo(
         logging.debug("Adding new remote")
         repo.create_remote(name="final-destination", url=dest_url)
         logging.debug("Pushing to {}".format(dest_url))
+        repo.git.lfs("push", "--all", "final-destination")
         repo.git.push(
             "final-destination",
             all=True,
             porcelain=True,
         )
-        repo.git.lfs("push", "--all", "final-destination")
     return (format_bytes(git_data), format_bytes(lfs_data - git_data))
 
 
