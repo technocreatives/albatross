@@ -239,6 +239,9 @@ def halt_ci(project: Any) -> int:
 def migrate_labels(source: Any, dest: Any) -> int:
     counter = 0
     for label in source.labels.list(as_list=False):
+        if not label.is_project_label:
+            logging.debug("Ignored non-project label {}".format(label.name))
+            continue
         args = {
             "name": label.name,
             "color": label.color,
