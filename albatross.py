@@ -30,7 +30,6 @@ class AlbatrossData:
     orphan_gid: int
     cookie: str
     dry_run: bool
-    milestone_map: dict
     state_map: dict
     state_file: Any
     sleep_time: int
@@ -314,8 +313,7 @@ def migrate_milestones(
             args["due_date"] = stone.due_date
         if stone.start_date is not None:
             args["start_date"] = stone.start_date
-        new_stone = dest.milestones.create(args)
-        data.milestone_map[stone.id] = new_stone.id
+        dest.milestones.create(args)
         counter += 1
     return (counter, data)
 
@@ -353,8 +351,6 @@ def migrate_merge_requests(
             "description": description,
             "labels": mr.labels,
         }
-        if mr.milestone is not None:
-            args["milestone_id"] = data.milestone_map[mr.milestone["id"]]
         new_mr = dest.mergerequests.create(args)
         counter += 1
         n_counter += migrate_notes(source=mr, dest=new_mr)
@@ -376,8 +372,6 @@ def migrate_issues(source: Any, dest: Any, data: AlbatrossData) -> Tuple[int, in
             "created_at": issue.created_at,
             "description": description,
         }
-        if issue.milestone is not None:
-            args["milestone_id"] = data.milestone_map[issue.milestone["id"]]
         if issue.due_date is not None:
             args["due_date"] = issue.due_date
         d_issue = dest.issues.create(args)
@@ -881,7 +875,6 @@ def main(
         orphan_gid=dest_orphan_group,
         cookie=session_cookie,
         dry_run=dry_run,
-        milestone_map={},
         state_map={},
         state_file=None,
         sleep_time=sleep_time,
