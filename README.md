@@ -64,6 +64,7 @@ or group. The following content is migrated:
 - Labels
 - Open merge requests
 - CI variables (not for archived projects)
+- Project milestones (issues are not linked, however)
 - Wikis
 - Protected tags and branches
 
@@ -72,6 +73,7 @@ The following content is _not_ migrated:
 - Container, package, or infrastructure registries
 - Closed merge requests (due to API limitations)
 - Boards
+- Group milestones
 - CI history
 - ... and anything else not enumerated above
 
