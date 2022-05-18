@@ -396,7 +396,11 @@ def migrate_wikis(source: Any, dest: Any) -> int:
         wiki = source.wikis.get(stub.slug)
         args = {"content": wiki.content, "title": wiki.title}
         if wiki.format is not None:
-            args["format"] = wiki.format
+            args["format"] = (
+                wiki.format
+                if wiki.format in ["markdown", "rdoc", "asciidoc", "org"]
+                else "markdown"
+            )
         dest.wikis.create(args)
         counter += 1
     return counter
