@@ -652,6 +652,12 @@ def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
             )
         )
         dest_group = data.dest.groups.get(data.state_map["group"][source_id]["id"])
+    elif data.dry_run:
+        dest_group = dest_parent
+        logging.warning(
+            "DRY RUN: group {} ({}) will not be migrated".format(source.name, source.id)
+        )
+        logging.warning("DRY RUN: subsequent target namespaces may be incorrect")
     else:
         dest_group = create_destination_group_with_state(
             source=source, dest_parent=dest_parent, data=data
@@ -694,12 +700,6 @@ def migrate_subgroup(subgroup: Any, dest_gid: int, data: AlbatrossData) -> None:
             "Group {} (id {}, at {}) is empty and will not be migrated".format(
                 group.name, group.id, group.full_path
             )
-        )
-        return
-
-    if data.dry_run:
-        logging.warning(
-            "DRY RUN: group {} ({}) will not be migrated".format(group.name, group.id)
         )
         return
 
