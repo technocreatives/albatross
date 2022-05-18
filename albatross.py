@@ -165,7 +165,8 @@ def migrate_repo(
         size = 0
         for root, _, files in os.walk(path):
             for f in files:
-                size += os.stat(os.path.join(root, f)).st_size
+                if os.path.isfile(f):
+                    size += os.stat(os.path.join(root, f)).st_size
         return size
 
     @_call_logger
