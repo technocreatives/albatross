@@ -447,25 +447,36 @@ def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
     if num_stones > 0:
         logging.info("Migrated {} milestones in project {}".format(num_stones, name))
 
-    (num_mrs, num_notes) = migrate_merge_requests(source=source, dest=dest, data=data)
-    if num_mrs > 0:
-        logging.info(
-            "Migrated {} open merge requests, containing {} notes, in project {}".format(
-                num_mrs, num_notes, name
-            )
+    if source.merge_requests_enabled:
+        (num_mrs, num_notes) = migrate_merge_requests(
+            source=source, dest=dest, data=data
         )
-
-    (num_issues, num_notes) = migrate_issues(source=source, dest=dest, data=data)
-    if num_issues > 0:
-        logging.info(
-            "Migrated {} issues, containing {} notes, in project {}".format(
-                num_issues, num_notes, name
+        if num_mrs > 0:
+            logging.info(
+                "Migrated {} open merge requests, containing {} notes, in project {}".format(
+                    num_mrs, num_notes, name
+                )
             )
-        )
+    else:
+        logging.debug("Merge requests disabled in project {}".format(name))
 
-    num_wiki = migrate_wikis(source=source, dest=dest)
-    if num_wiki > 0:
-        logging.info("Migrated {} wiki pages in project {}".format(num_wiki, name))
+    if source.issues_enabled:
+        (num_issues, num_notes) = migrate_issues(source=source, dest=dest, data=data)
+        if num_issues > 0:
+            logging.info(
+                "Migrated {} issues, containing {} notes, in project {}".format(
+                    num_issues, num_notes, name
+                )
+            )
+    else:
+        logging.debug("Issues disabled in project {}".format(name))
+
+    if source.wiki_enabled:
+        num_wiki = migrate_wikis(source=source, dest=dest)
+        if num_wiki > 0:
+            logging.info("Migrated {} wiki pages in project {}".format(num_wiki, name))
+    else:
+        logging.debug("Wikis disabled in project {}".format(name))
 
     num_pipes = halt_ci(project=dest)
     if num_pipes > 0:
