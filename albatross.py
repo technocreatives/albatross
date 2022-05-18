@@ -600,6 +600,8 @@ def migrate_projects(
 def create_destination_group(source: Any, dest_parent: Any, data: AlbatrossData) -> Any:
     name = source.name
     path = source.path
+    while len(path) < 2:
+        path = path + "x"
     logging.info(
         "Creating group {} {}".format(
             name,
