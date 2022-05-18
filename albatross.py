@@ -680,7 +680,7 @@ def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
 @_call_logger
 def probe_subtree(group: Any, data: AlbatrossData) -> bool:
     """Returns true if the group contains a project or a group which does. Runs recursively."""
-    if len(group.projects.list()) > 0:
+    if len(group.projects.list(all=False)) > 0:
         return True
     else:
         for subgroup in group.subgroups.list(as_list=False):
