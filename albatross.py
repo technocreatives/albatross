@@ -354,7 +354,7 @@ def migrate_merge_requests(
             "labels": mr.labels,
         }
         if mr.milestone is not None:
-            args["milestone_id"] = data.milestone_map[mr.milestone]
+            args["milestone_id"] = data.milestone_map[mr.milestone["id"]]
         new_mr = dest.mergerequests.create(args)
         counter += 1
         n_counter += migrate_notes(source=mr, dest=new_mr)
