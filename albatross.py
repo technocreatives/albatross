@@ -201,6 +201,7 @@ def migrate_repo(
         repo = Repo.clone_from(
             url=source_url,
             to_path=tdir,
+            multi_options=["--mirror"]
         )
         git_data = dir_size(tdir)
         logging.debug("Pulling LFS history")
