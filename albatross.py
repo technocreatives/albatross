@@ -407,17 +407,19 @@ def migrate_wikis(source: Any, dest: Any) -> int:
 def migrate_project_fill(source: Any, dest: Any, data: AlbatrossData) -> None:
     name = source.name
     archived: bool = source.archived
-    if archived:
-        logging.info("Project {} is archived - migration will be reduced".format(name))
+    # if archived:
+    #     logging.info("Project {} is archived - migration will be reduced".format(name))
 
-    if archived:
-        logging.debug(
-            "Project {} is archived - will not migrate variables".format(name)
-        )
-    else:
+    # if archived:
+    #     logging.debug(
+    #         "Project {} is archived - will not migrate variables".format(name)
+    #     )
+    if source.jobs_enabled:
         num_vars = migrate_variables(source=source, dest=dest)
         if num_vars > 0:
             logging.info("Migrated {} variables in project {}".format(num_vars, name))
+    else:
+        logging.debug("CI disabled in project {}; won't migrate variables".format(name))
 
     num_labels = migrate_labels(source=source, dest=dest)
     if num_labels > 0:
