@@ -198,11 +198,7 @@ def migrate_repo(
     logging.debug("Auth'd dest URL: {}".format(dest_url))
     with tempfile.TemporaryDirectory() as tdir:
         logging.debug("Cloning from {} into {}".format(source_url, tdir))
-        repo = Repo.clone_from(
-            url=source_url,
-            to_path=tdir,
-            multi_options=["--mirror"]
-        )
+        repo = Repo.clone_from(url=source_url, to_path=tdir, multi_options=["--mirror"])
         git_data = dir_size(tdir)
         logging.debug("Pulling LFS history")
         repo.git.lfs("fetch", "--all")
@@ -214,6 +210,11 @@ def migrate_repo(
         repo.git.push(
             "final-destination",
             all=True,
+            porcelain=True,
+        )
+        repo.git.push(
+            "final-destination",
+            tags=True,
             porcelain=True,
         )
     return (format_bytes(git_data), format_bytes(lfs_data - git_data))
