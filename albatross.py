@@ -687,6 +687,11 @@ def migrate_group(source: Any, dest_parent: Any, data: AlbatrossData) -> None:
         dest_group = create_destination_group_with_state(
             source=source, dest_parent=dest_parent, data=data
         )
+        num_vars = migrate_variables(source=source, dest=dest_group)
+        if num_vars > 0:
+            logging.info(
+                "Migrated {} variables in group {}".format(num_vars, dest_group.name)
+            )
     logging.debug("Iterating over projects of source group {}".format(source.id))
     migrate_projects(
         project_list=source.projects.list(all=True), dest_gid=dest_group.id, data=data
