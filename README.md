@@ -2,6 +2,13 @@
 
 Tool to automate migrating a GitLab group to a GitLab instance
 
+Do you find yourself in the position that you want to take your GitLab group and go
+home/elsewhere? So did we, but the prospect of hand-migrating hundreds and hundreds of
+projects and groups was unappealing. One _could_ have used GitLab's built-in migration
+system, but for some reason, that left CI variables behind, which we absolutely needed.
+So, the Only Logical Conclusion™ was to roll our own migration tool. And so Albatross
+was born.
+
 ## Usage
 
 ```shell
@@ -93,6 +100,11 @@ groups/projects that have already been migrated and, in the case of projects, in
 migrations. This means that Albatross can be restarted after an abort/crash and pick up
 where it left off. Projects which were incompletely migrated will be deleted on the
 destination, then re-migrated.
+
+As a final note, keep in mind that Albatross was written for our specific use-case.
+Assumptions may have been made which do not apply to you or your organization. GitLab
+features that are critical for your may be omitted here, because we don't use them. Your
+mileage may vary. Consult your physician before use.
 
 ## License
 
